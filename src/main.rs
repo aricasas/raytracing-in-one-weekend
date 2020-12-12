@@ -12,9 +12,9 @@ fn main() {
             let g: f64 = i as f64 / (IMAGE_WIDTH - 1) as f64;
             let b: f64 = 0.25;
 
-            let r: u32 = (255.999 * r) as u32;
-            let g: u32 = (255.999 * g) as u32;
-            let b: u32 = (255.999 * b) as u32;
+            let r: u32 = (255.0 * r) as u32;
+            let g: u32 = (255.0 * g) as u32;
+            let b: u32 = (255.0 * b) as u32;
 
             println!("{} {} {}", r, g, b);
         }
