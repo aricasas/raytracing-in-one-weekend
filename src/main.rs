@@ -1,3 +1,13 @@
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::correctness,
+    clippy::complexity,
+    clippy::perf,
+    clippy::style
+)]
+
 fn main() {
     const IMAGE_WIDTH: u32 = 256;
     const IMAGE_HEIGHT: u32 = 256;
