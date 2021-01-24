@@ -21,8 +21,8 @@ fn main() {
     for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\rScanlines remaining: {}", j);
         for i in 0..IMAGE_WIDTH {
-            let r: f64 = j as f64 / (IMAGE_HEIGHT - 1) as f64;
-            let g: f64 = i as f64 / (IMAGE_WIDTH - 1) as f64;
+            let r: f64 = f64::from(i) / f64::from(IMAGE_WIDTH - 1);
+            let g: f64 = f64::from(j) / f64::from(IMAGE_HEIGHT - 1);
             let b: f64 = 0.25;
 
             let r: u32 = (255.0 * r) as u32;
