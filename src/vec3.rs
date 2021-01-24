@@ -14,6 +14,15 @@ impl Vec3 {
     pub const fn z(&self) -> f64 {
         self.2
     }
+    pub const fn r(&self) -> f64 {
+        self.0
+    }
+    pub const fn g(&self) -> f64 {
+        self.1
+    }
+    pub const fn b(&self) -> f64 {
+        self.2
+    }
     pub fn length_squared(&self) -> f64 {
         (self.0.powi(2)) + (self.1.powi(2)) + (self.2.powi(2))
     }
