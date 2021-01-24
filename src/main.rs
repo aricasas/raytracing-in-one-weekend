@@ -10,6 +10,17 @@
 
 mod vec3;
 use vec3::Vec3;
+mod color;
+use color::Color;
+
+fn write_color(color: &Color) {
+    println!(
+        "{} {} {}",
+        (255.0 * color.r()) as u32,
+        (255.0 * color.g()) as u32,
+        (255.0 * color.b()) as u32
+    );
+}
 
 fn main() {
     const IMAGE_WIDTH: u32 = 256;
@@ -21,15 +32,13 @@ fn main() {
     for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\rScanlines remaining: {}", j);
         for i in 0..IMAGE_WIDTH {
-            let r: f64 = f64::from(i) / f64::from(IMAGE_WIDTH - 1);
-            let g: f64 = f64::from(j) / f64::from(IMAGE_HEIGHT - 1);
-            let b: f64 = 0.25;
+            let pixel_color = Color::new(
+                f64::from(i) / f64::from(IMAGE_WIDTH - 1),
+                f64::from(j) / f64::from(IMAGE_HEIGHT - 1),
+                0.25,
+            );
 
-            let r: u32 = (255.0 * r) as u32;
-            let g: u32 = (255.0 * g) as u32;
-            let b: u32 = (255.0 * b) as u32;
-
-            println!("{} {} {}", r, g, b);
+            write_color(&pixel_color);
         }
     }
 
