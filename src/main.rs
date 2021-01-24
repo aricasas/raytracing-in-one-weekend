@@ -12,6 +12,8 @@ mod vec3;
 use vec3::Vec3;
 mod color;
 use color::Color;
+mod ray;
+use ray::Ray;
 
 fn write_color(color: &Color) {
     println!(
