@@ -9,12 +9,12 @@ impl Color {
     }
 
     pub const fn r(&self) -> f64 {
-        self.0.r()
+        self.0.x()
     }
     pub const fn g(&self) -> f64 {
-        self.0.g()
+        self.0.y()
     }
     pub const fn b(&self) -> f64 {
-        self.0.b()
+        self.0.z()
     }
 }
