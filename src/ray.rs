@@ -13,7 +13,7 @@ impl Ray {
 
     /// Returns the position of the ray when it travels "t" in its direction
     pub fn at(&self, t: f64) -> Vec3 {
-        self.origin + self.direction * t
+        self.origin + (self.direction * t)
     }
 }
 
