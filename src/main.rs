@@ -15,15 +15,6 @@ use color::Color;
 mod ray;
 use ray::Ray;
 
-fn write_color(color: &Color) {
-    println!(
-        "{} {} {}",
-        (255.0 * color.r()) as u32,
-        (255.0 * color.g()) as u32,
-        (255.0 * color.b()) as u32
-    );
-}
-
 fn main() {
     const IMAGE_WIDTH: u32 = 480;
     const IMAGE_HEIGHT: u32 = 270;
@@ -40,7 +31,7 @@ fn main() {
                 0.25,
             );
 
-            write_color(&pixel_color);
+            pixel_color.write();
         }
     }
 

@@ -17,4 +17,13 @@ impl Color {
     pub const fn b(&self) -> f64 {
         self.0.z()
     }
+
+    pub fn write(&self) {
+        println!(
+            "{} {} {}",
+            (255.0 * self.r()) as u32,
+            (255.0 * self.g()) as u32,
+            (255.0 * self.b()) as u32
+        );
+    }
 }
