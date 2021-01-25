@@ -35,3 +35,59 @@ impl Color {
         );
     }
 }
+
+// Addition
+impl ops::Add for Color {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        Self::new(
+            self.r() + other.r(),
+            self.g() + other.g(),
+            self.b() + other.b(),
+        )
+    }
+}
+impl ops::Add for &Color {
+    type Output = Color;
+    fn add(self, other: Self) -> Color {
+        Color::new(
+            self.r() + other.r(),
+            self.g() + other.g(),
+            self.b() + other.b(),
+        )
+    }
+}
+
+// Multiplication
+impl ops::Mul for Color {
+    type Output = Self;
+    fn mul(self, other: Self) -> Self {
+        Self::new(
+            self.r() * other.r(),
+            self.g() * other.g(),
+            self.b() * other.b(),
+        )
+    }
+}
+impl ops::Mul for &Color {
+    type Output = Color;
+    fn mul(self, other: Self) -> Color {
+        Color::new(
+            self.r() * other.r(),
+            self.g() * other.g(),
+            self.b() * other.b(),
+        )
+    }
+}
+impl ops::Mul<f64> for Color {
+    type Output = Self;
+    fn mul(self, other: f64) -> Self {
+        Self::new(self.r() * other, self.g() * other, self.b() * other)
+    }
+}
+impl ops::Mul<f64> for &Color {
+    type Output = Color;
+    fn mul(self, other: f64) -> Color {
+        Color::new(self.r() * other, self.g() * other, self.b() * other)
+    }
+}
