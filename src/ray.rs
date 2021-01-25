@@ -18,8 +18,11 @@ impl Ray {
     }
 
     pub fn color(&self) -> Color {
-        if self.hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5) {
-            return Color::new(1.0, 0.0, 0.0);
+        let t = self.hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5);
+
+        if t > 0.0 {
+            let normal = (self.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit_vector();
+            return Color::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0) * 0.5;
         }
 
         let unit_direction = self.direction.unit_vector();
@@ -27,7 +30,7 @@ impl Ray {
         Color::linear_blend(t, &Color::new(1.0, 1.0, 1.0), &Color::new(0.5, 0.7, 1.0))
     }
 
-    fn hit_sphere(&self, center: Vec3, radius: f64) -> bool {
+    fn hit_sphere(&self, center: Vec3, radius: f64) -> f64 {
         let oc = self.origin - center;
         let a = Vec3::dot(&self.direction, &self.direction);
         let b = 2.0 * Vec3::dot(&oc, &self.direction);
@@ -35,7 +38,11 @@ impl Ray {
 
         let discriminant = b.powi(2) - 4.0 * a * c;
 
-        discriminant > 0.0
+        if discriminant < 0.0 {
+            -1.0
+        } else {
+            (-b - discriminant.sqrt()) / (2.0 * a)
+        }
     }
 }
 
