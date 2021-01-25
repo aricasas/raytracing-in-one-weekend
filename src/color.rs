@@ -20,11 +20,7 @@ impl Color {
     }
 
     pub fn linear_blend(t: f64, start: &Self, end: &Self) -> Self {
-        Self::new(
-            (1.0 - t) * start.r() + (t * end.r()),
-            (1.0 - t) * start.g() + (t * end.g()),
-            (1.0 - t) * start.b() + (t * end.b()),
-        )
+        (start * (1.0 - t)) + (end * (t))
     }
 
     pub fn write(&self) {
