@@ -1,3 +1,4 @@
+use super::color::Color;
 use super::vec3::Vec3;
 
 #[derive(Debug)]
@@ -14,6 +15,12 @@ impl Ray {
     /// Returns the position of the ray when it travels "t" in its direction
     pub fn at(&self, t: f64) -> Vec3 {
         self.origin + (self.direction * t)
+    }
+
+    pub fn color(&self) -> Color {
+        let unit_direction = self.direction.unit_vector();
+        let t = 0.5 * (unit_direction.y() + 1.0);
+        Color::linear_blend(t, &Color::new(1.0, 1.0, 1.0), &Color::new(0.5, 0.7, 1.0))
     }
 }
 

@@ -18,6 +18,14 @@ impl Color {
         self.0.z()
     }
 
+    pub fn linear_blend(t: f64, start: &Self, end: &Self) -> Self {
+        Self::new(
+            (1.0 - t) * start.r() + (t * end.r()),
+            (1.0 - t) * start.g() + (t * end.g()),
+            (1.0 - t) * start.b() + (t * end.b()),
+        )
+    }
+
     pub fn write(&self) {
         println!(
             "{} {} {}",
