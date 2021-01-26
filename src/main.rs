@@ -8,18 +8,26 @@
     clippy::style
 )]
 
-mod vec3;
-use vec3::Vec3;
 mod color;
-use color::Color;
+mod hittable;
+use hittable::HittableList;
 mod ray;
 use ray::Ray;
+mod sphere;
+use sphere::Sphere;
+mod vec3;
+use vec3::Vec3;
 
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_HEIGHT: u32 = 270;
     const IMAGE_WIDTH: u32 = (IMAGE_HEIGHT as f64 * ASPECT_RATIO) as u32;
+
+    // World
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
 
     // Camera
     const VIEWPORT_HEIGHT: f64 = 2.0;
@@ -46,7 +54,7 @@ fn main() {
                 LOWER_LEFT_CORNER + (HORIZONTAL * u) + (VERTICAL * v) - ORIGIN,
             );
 
-            let pixel_color = ray.color();
+            let pixel_color = ray.calculate_color(&world);
 
             pixel_color.write();
         }

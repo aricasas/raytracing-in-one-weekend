@@ -1,4 +1,5 @@
 use super::color::Color;
+use super::hittable::{HitRecord, Hittable, HittableList};
 use super::vec3::Vec3;
 
 #[derive(Debug)]
@@ -17,32 +18,21 @@ impl Ray {
         self.origin + (self.direction * t)
     }
 
-    pub fn color(&self) -> Color {
-        let t = self.hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5);
+    pub fn calculate_color(&self, world: &HittableList) -> Color {
+        let mut record = HitRecord::new();
 
-        if t > 0.0 {
-            let normal = (self.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit_vector();
-            return Color::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0) * 0.5;
+        if world.hit(self, 0.0, f64::INFINITY, &mut record) {
+            let color = (record.normal + Vec3::new(1.0, 1.0, 1.0)) * 0.5;
+            return Color::new(color.x(), color.y(), color.z());
         }
 
+        // If no hits
         let unit_direction = self.direction.unit_vector();
-        let t = 0.5 * (unit_direction.y() + 1.0);
-        Color::linear_blend(t, &Color::new(1.0, 1.0, 1.0), &Color::new(0.5, 0.7, 1.0))
-    }
-
-    fn hit_sphere(&self, center: Vec3, radius: f64) -> f64 {
-        let oc = self.origin - center;
-        let a = self.direction.length_squared();
-        let half_b = Vec3::dot(&oc, &self.direction);
-        let c = oc.length_squared() - radius.powi(2);
-
-        let discriminant = half_b.powi(2) - a * c;
-
-        if discriminant < 0.0 {
-            -1.0
-        } else {
-            (-half_b - discriminant.sqrt()) / (a)
-        }
+        Color::linear_blend(
+            0.5 * (unit_direction.y() + 1.0),
+            &Color::new(1.0, 1.0, 1.0),
+            &Color::new(0.5, 0.7, 1.0),
+        )
     }
 }
 
