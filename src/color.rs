@@ -1,3 +1,4 @@
+use super::utilities;
 use super::vec3::Vec3;
 use std::ops;
 
@@ -23,12 +24,18 @@ impl Color {
         (start * (1.0 - t)) + (end * (t))
     }
 
-    pub fn write(&self) {
+    pub fn write(&self, samples_per_pixel: u32) {
+        let samples_per_pixel = samples_per_pixel as f64;
+
+        let r = self.r() / samples_per_pixel;
+        let g = self.g() / samples_per_pixel;
+        let b = self.b() / samples_per_pixel;
+
         println!(
             "{} {} {}",
-            (255.0 * self.r()) as u32,
-            (255.0 * self.g()) as u32,
-            (255.0 * self.b()) as u32
+            (255.0 * utilities::clamp(r, 0.0, 0.999)) as u32,
+            (255.0 * utilities::clamp(g, 0.0, 0.999)) as u32,
+            (255.0 * utilities::clamp(b, 0.0, 0.999)) as u32
         );
     }
 }
