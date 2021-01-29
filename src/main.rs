@@ -29,6 +29,7 @@ fn main() {
     const IMAGE_HEIGHT: u32 = 270;
     const IMAGE_WIDTH: u32 = (IMAGE_HEIGHT as f64 * ASPECT_RATIO) as u32;
     const SAMPLES_PER_PIXEL: u32 = 100;
+    const MAX_DEPTH: u32 = 50;
 
     // World
     let mut world = HittableList::new();
@@ -53,7 +54,7 @@ fn main() {
                 let v = (f64::from(j) + rng.gen::<f64>()) / f64::from(IMAGE_HEIGHT - 1);
 
                 let ray = camera.get_ray(u, v);
-                pixel_color = pixel_color + ray.calculate_color(&world);
+                pixel_color = pixel_color + Ray::calculate_color(&ray, &world, MAX_DEPTH);
             }
 
             pixel_color.write(SAMPLES_PER_PIXEL);
@@ -62,3 +63,5 @@ fn main() {
 
     eprintln!("\nDone.");
 }
+
+// https://raytracing.github.io/books/RayTracingInOneWeekend.html#diffusematerials

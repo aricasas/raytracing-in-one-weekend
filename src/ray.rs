@@ -18,16 +18,26 @@ impl Ray {
         self.origin + (self.direction * t)
     }
 
-    pub fn calculate_color(&self, world: &HittableList) -> Color {
+    pub fn calculate_color(ray: &Self, world: &HittableList, depth: u32) -> Color {
+        // If ray has bounced too many times
+        if depth == 0 {
+            return Color::new(0.0, 0.0, 0.0);
+        }
+
         let mut record = HitRecord::new();
 
-        if world.hit(self, 0.0, f64::INFINITY, &mut record) {
-            let color = (record.normal + Vec3::new(1.0, 1.0, 1.0)) * 0.5;
-            return Color::new(color.x(), color.y(), color.z());
+        if world.hit(ray, 0.0001, f64::INFINITY, &mut record) {
+            let target = record.p + record.normal + Vec3::random_unit_vector();
+
+            return Self::calculate_color(
+                &Self::new(record.p, target - record.p),
+                world,
+                depth - 1,
+            ) * 0.5;
         }
 
         // If no hits
-        let unit_direction = self.direction.unit_vector();
+        let unit_direction = ray.direction.unit_vector();
         Color::linear_blend(
             0.5 * (unit_direction.y() + 1.0),
             &Color::new(1.0, 1.0, 1.0),
