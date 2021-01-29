@@ -8,6 +8,12 @@ pub struct Lambertian {
     pub albedo: Color,
 }
 
+impl Lambertian {
+    pub const fn new(albedo: Color) -> Self {
+        Self { albedo }
+    }
+}
+
 impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> ScatterRecord {
         let mut scatter_direction = record.normal + Vec3::random_unit_vector();

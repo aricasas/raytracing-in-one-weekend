@@ -6,6 +6,16 @@ use crate::vec3::Vec3;
 
 pub struct Metal {
     pub albedo: Color,
+    pub fuzz: f64,
+}
+
+impl Metal {
+    pub fn new(albedo: Color, fuzz: f64) -> Self {
+        Self {
+            albedo,
+            fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
+        }
+    }
 }
 
 impl Material for Metal {
@@ -14,7 +24,10 @@ impl Material for Metal {
 
         let mut scatter_record = ScatterRecord::new();
 
-        scatter_record.scattered_ray = Ray::new(record.p, reflected);
+        scatter_record.scattered_ray = Ray::new(
+            record.p,
+            reflected + Vec3::random_in_unit_sphere() * self.fuzz,
+        );
         scatter_record.attenuation = self.albedo;
         scatter_record.scattered =
             Vec3::dot(&scatter_record.scattered_ray.direction, &record.normal) > 0.0;

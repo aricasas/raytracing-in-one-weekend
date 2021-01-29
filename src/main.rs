@@ -23,6 +23,7 @@ use vec3::Vec3;
 mod camera;
 use camera::Camera;
 mod material;
+use material::{lambertian::Lambertian, metal::Metal};
 mod utilities;
 
 fn main() {
@@ -36,18 +37,10 @@ fn main() {
     // World
     let mut world = HittableList::new();
 
-    let material_ground = material::lambertian::Lambertian {
-        albedo: Color::new(0.8, 0.8, 0.0),
-    };
-    let material_center = material::lambertian::Lambertian {
-        albedo: Color::new(0.7, 0.3, 0.3),
-    };
-    let material_left = material::metal::Metal {
-        albedo: Color::new(0.8, 0.8, 0.8),
-    };
-    let material_right = material::metal::Metal {
-        albedo: Color::new(0.8, 0.6, 0.2),
-    };
+    let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
+    let material_center = Lambertian::new(Color::new(0.7, 0.3, 0.3));
+    let material_left = Metal::new(Color::new(0.8, 0.8, 0.8), 0.3);
+    let material_right = Metal::new(Color::new(0.8, 0.6, 0.2), 1.0);
 
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, -100.5, -1.0),
