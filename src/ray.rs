@@ -1,5 +1,5 @@
 use super::color::Color;
-use super::hittable::{HitRecord, Hittable, HittableList};
+use super::hittable::{Hittable, HittableList};
 use super::vec3::Vec3;
 
 #[derive(Debug)]
@@ -24,16 +24,15 @@ impl Ray {
             return Color::new(0.0, 0.0, 0.0);
         }
 
-        let mut record = HitRecord::new();
+        let record = world.hit(ray, 0.0001, f64::INFINITY);
 
-        if world.hit(ray, 0.0001, f64::INFINITY, &mut record) {
-            let target = record.p + record.normal + Vec3::random_unit_vector();
-
-            return Self::calculate_color(
-                &Self::new(record.p, target - record.p),
-                world,
-                depth - 1,
-            ) * 0.5;
+        if record.hit_anything {
+            let scatter_record = record.material.scatter(ray, &record);
+            if scatter_record.scattered {
+                return scatter_record.attenuation
+                    * Self::calculate_color(&scatter_record.scattered_ray, world, depth - 1);
+            }
+            return Color::new(0.0, 0.0, 0.0);
         }
 
         // If no hits

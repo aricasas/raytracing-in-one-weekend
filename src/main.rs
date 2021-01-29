@@ -8,6 +8,7 @@
     clippy::style
 )]
 use rand::Rng;
+use std::rc::Rc;
 
 mod color;
 use color::Color;
@@ -21,6 +22,7 @@ mod vec3;
 use vec3::Vec3;
 mod camera;
 use camera::Camera;
+mod material;
 mod utilities;
 
 fn main() {
@@ -33,8 +35,40 @@ fn main() {
 
     // World
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+
+    let material_ground = material::lambertian::Lambertian {
+        albedo: Color::new(0.8, 0.8, 0.0),
+    };
+    let material_center = material::lambertian::Lambertian {
+        albedo: Color::new(0.7, 0.3, 0.3),
+    };
+    let material_left = material::metal::Metal {
+        albedo: Color::new(0.8, 0.8, 0.8),
+    };
+    let material_right = material::metal::Metal {
+        albedo: Color::new(0.8, 0.6, 0.2),
+    };
+
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, -100.5, -1.0),
+        100.0,
+        Rc::new(material_ground),
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, 0.0, -1.0),
+        0.5,
+        Rc::new(material_center),
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(-1.0, 0.0, -1.0),
+        0.5,
+        Rc::new(material_left),
+    )));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(1.0, 0.0, -1.0),
+        0.5,
+        Rc::new(material_right),
+    )));
 
     // Camera
     let camera = Camera::new();
@@ -63,5 +97,3 @@ fn main() {
 
     eprintln!("\nDone.");
 }
-
-// https://raytracing.github.io/books/RayTracingInOneWeekend.html#diffusematerials

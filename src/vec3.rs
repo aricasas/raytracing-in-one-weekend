@@ -18,6 +18,12 @@ impl Vec3 {
         self.2
     }
 
+    /// Returns true if the vector is close to zero in all dimensions
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        (self.x().abs() < s) && (self.y().abs() < s) && (self.z().abs() < s)
+    }
+
     pub fn random() -> Self {
         let mut rng = rand::thread_rng();
 
@@ -43,6 +49,10 @@ impl Vec3 {
     }
     pub fn random_unit_vector() -> Self {
         Self::random_in_unit_sphere().unit_vector()
+    }
+
+    pub fn reflect(v: &Self, n: &Self) -> Self {
+        v - &(n * Self::dot(v, n) * 2.0)
     }
 
     pub fn length_squared(&self) -> f64 {

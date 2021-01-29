@@ -2,7 +2,7 @@ use super::utilities;
 use super::vec3::Vec3;
 use std::ops;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Color(Vec3);
 
 impl Color {
