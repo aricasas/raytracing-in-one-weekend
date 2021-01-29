@@ -27,9 +27,10 @@ impl Color {
     pub fn write(&self, samples_per_pixel: u32) {
         let samples_per_pixel = samples_per_pixel as f64;
 
-        let r = self.r() / samples_per_pixel;
-        let g = self.g() / samples_per_pixel;
-        let b = self.b() / samples_per_pixel;
+        // Divide the color by the number of samples and gamma-correct for gamma=2.0
+        let r = (self.r() / samples_per_pixel).sqrt();
+        let g = (self.g() / samples_per_pixel).sqrt();
+        let b = (self.b() / samples_per_pixel).sqrt();
 
         println!(
             "{} {} {}",
