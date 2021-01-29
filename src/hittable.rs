@@ -13,7 +13,7 @@ pub struct HitRecord {
 }
 impl HitRecord {
     pub const fn new() -> Self {
-        HitRecord {
+        Self {
             t: 0.0,
             p: Vec3::new(0.0, 0.0, 0.0),
             normal: Vec3::new(0.0, 0.0, 0.0),
