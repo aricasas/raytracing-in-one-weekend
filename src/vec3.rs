@@ -55,6 +55,14 @@ impl Vec3 {
         v - &(n * Self::dot(v, n) * 2.0)
     }
 
+    pub fn refract(uv: &Self, normal: &Self, etai_over_etat: f64) -> Self {
+        let cos_theta: f64 = Self::dot(&-uv, normal).min(1.0);
+        let r_out_perpendicular = (uv + &(normal * cos_theta)) * etai_over_etat;
+        let r_out_parallel = normal * -((1.0 - r_out_perpendicular.length_squared()).abs().sqrt());
+
+        r_out_perpendicular + r_out_parallel
+    }
+
     pub fn length_squared(&self) -> f64 {
         (self.0.powi(2)) + (self.1.powi(2)) + (self.2.powi(2))
     }
@@ -92,6 +100,12 @@ impl ops::Neg for Vec3 {
     type Output = Self;
     fn neg(self) -> Self::Output {
         Self::new(-self.0, -self.1, -self.2)
+    }
+}
+impl ops::Neg for &Vec3 {
+    type Output = Vec3;
+    fn neg(self) -> Self::Output {
+        Vec3::new(-self.0, -self.1, -self.2)
     }
 }
 

@@ -3,6 +3,7 @@ use super::hittable::HitRecord;
 use super::ray::Ray;
 use super::vec3::Vec3;
 
+pub mod dielectric;
 pub mod lambertian;
 pub mod metal;
 
