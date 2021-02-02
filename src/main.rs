@@ -69,12 +69,21 @@ fn main() {
     )));
 
     // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(3.0, 3.0, 2.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, -1.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 20.0;
+    const APERTURE: f64 = 2.0;
+    let DIST_TO_FOCUS: f64 = (LOOK_AT - LOOK_FROM).length();
+
     let camera = Camera::new(
-        Vec3::new(-2.0, 2.0, 1.0),
-        Vec3::new(0.0, 0.0, -1.0),
-        Vec3::new(0.0, 1.0, 0.0),
-        20.0,
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
         ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
     );
 
     // Render
@@ -87,7 +96,7 @@ fn main() {
         for i in 0..IMAGE_WIDTH {
             let mut pixel_color = Color::new(0.0, 0.0, 0.0);
 
-            for s in 0..SAMPLES_PER_PIXEL {
+            for _ in 0..SAMPLES_PER_PIXEL {
                 let u = (f64::from(i) + rng.gen::<f64>()) / f64::from(IMAGE_WIDTH - 1);
                 let v = (f64::from(j) + rng.gen::<f64>()) / f64::from(IMAGE_HEIGHT - 1);
 
