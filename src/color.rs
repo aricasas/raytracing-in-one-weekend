@@ -1,6 +1,8 @@
+use rand::Rng;
+use std::ops;
+
 use super::utilities;
 use super::vec3::Vec3;
-use std::ops;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Color(Vec3);
@@ -18,6 +20,11 @@ impl Color {
     }
     pub const fn b(&self) -> f64 {
         self.0.z()
+    }
+    pub fn random() -> Self {
+        let mut rng = rand::thread_rng();
+
+        Self::new(rng.gen(), rng.gen(), rng.gen())
     }
 
     pub fn linear_blend(t: f64, start: &Self, end: &Self) -> Self {

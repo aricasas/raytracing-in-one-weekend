@@ -23,58 +23,27 @@ use vec3::Vec3;
 mod camera;
 use camera::Camera;
 mod material;
-use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
+use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal, Material};
 mod utilities;
 
 fn main() {
     // Image
-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u32 = 480;
+    const ASPECT_RATIO: f64 = 3.0 / 2.0;
+    const IMAGE_WIDTH: u32 = 1800;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: u32 = 100;
+    const SAMPLES_PER_PIXEL: u32 = 500;
     const MAX_DEPTH: u32 = 50;
 
     // World
-    let mut world = HittableList::new();
-
-    let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
-    let material_center = Lambertian::new(Color::new(0.1, 0.2, 0.5));
-    let material_left = Dielectric::new(1.5);
-    let material_right = Metal::new(Color::new(0.8, 0.6, 0.2), 0.0);
-
-    world.add(Box::new(Sphere::new(
-        Vec3::new(0.0, -100.5, -1.0),
-        100.0,
-        Rc::new(material_ground),
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(0.0, 0.0, -1.0),
-        0.5,
-        Rc::new(material_center),
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        0.5,
-        Rc::new(material_left),
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        -0.45,
-        Rc::new(material_left),
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(1.0, 0.0, -1.0),
-        0.5,
-        Rc::new(material_right),
-    )));
+    let world = random_scene();
 
     // Camera
-    const LOOK_FROM: Vec3 = Vec3::new(3.0, 3.0, 2.0);
-    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, -1.0);
+    const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
     const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
     const FOV: f64 = 20.0;
-    const APERTURE: f64 = 2.0;
-    let DIST_TO_FOCUS: f64 = (LOOK_AT - LOOK_FROM).length();
+    const APERTURE: f64 = 0.1;
+    let DIST_TO_FOCUS: f64 = 10.0;
 
     let camera = Camera::new(
         LOOK_FROM,
@@ -88,6 +57,8 @@ fn main() {
 
     // Render
     let mut rng = rand::thread_rng();
+
+    let now = std::time::Instant::now();
 
     print!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
 
@@ -108,6 +79,67 @@ fn main() {
         }
     }
 
-    eprintln!("\nDone.");
+    eprintln!("\nDone. Rendering took {:.3}s", now.elapsed().as_secs_f32());
 }
-// https://raytracing.github.io/books/RayTracingInOneWeekend.html#dielectrics
+
+fn random_scene() -> HittableList {
+    let mut world = HittableList::new();
+
+    let ground_material = Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
+
+    let mut rng = rand::thread_rng();
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat: f64 = rng.gen();
+            let center = Vec3::new(
+                0.9_f64.mul_add(rng.gen::<f64>(), f64::from(a)),
+                0.2,
+                0.9_f64.mul_add(rng.gen::<f64>(), f64::from(b)),
+            );
+
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                let sphere_material: Rc<dyn Material> = match choose_mat {
+                    // Lambertian
+                    x if x < 0.8 => Rc::new(Lambertian::new(Color::random() * Color::random())),
+
+                    // Metal
+                    x if x < 0.95 => Rc::new(Metal::new(Color::random(), rng.gen_range(0.0..0.5))),
+
+                    // Glass
+                    _ => Rc::new(Dielectric::new(1.5)),
+                };
+
+                world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+            }
+        }
+    }
+
+    let material1 = Rc::new(Dielectric::new(1.5));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, 1.0, 0.0),
+        1.0,
+        material1,
+    )));
+
+    let material2 = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(-4.0, 1.0, 0.0),
+        1.0,
+        material2,
+    )));
+
+    let material3 = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(4.0, 1.0, 0.0),
+        1.0,
+        material3,
+    )));
+
+    world
+}
