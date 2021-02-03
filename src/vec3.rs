@@ -75,7 +75,9 @@ impl Vec3 {
     }
 
     pub fn length_squared(&self) -> f64 {
-        (self.0.powi(2)) + (self.1.powi(2)) + (self.2.powi(2))
+        // (self.0 ^ 2) + (self.1 ^ 2) + (self.2 ^ 2)
+        self.0
+            .mul_add(self.0, self.1.mul_add(self.1, self.2 * self.2))
     }
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()

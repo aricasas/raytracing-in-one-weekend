@@ -32,19 +32,18 @@ impl Color {
     }
 
     pub fn write(&self, samples_per_pixel: u32) {
-        let samples_per_pixel = samples_per_pixel as f64;
+        let samples_per_pixel = f64::from(samples_per_pixel);
 
         // Divide the color by the number of samples and gamma-correct for gamma=2.0
-        let r = (self.r() / samples_per_pixel).sqrt();
-        let g = (self.g() / samples_per_pixel).sqrt();
-        let b = (self.b() / samples_per_pixel).sqrt();
+        let mut r = (self.r() / samples_per_pixel).sqrt();
+        let mut g = (self.g() / samples_per_pixel).sqrt();
+        let mut b = (self.b() / samples_per_pixel).sqrt();
 
-        println!(
-            "{} {} {}",
-            (255.0 * utilities::clamp(r, 0.0, 0.999)) as u32,
-            (255.0 * utilities::clamp(g, 0.0, 0.999)) as u32,
-            (255.0 * utilities::clamp(b, 0.0, 0.999)) as u32
-        );
+        r = (255.0 * utilities::clamp(r, 0.0, 0.999)).round();
+        g = (255.0 * utilities::clamp(g, 0.0, 0.999)).round();
+        b = (255.0 * utilities::clamp(b, 0.0, 0.999)).round();
+
+        println!("{:.0} {:.0} {:.0}", r, g, b);
     }
 }
 
@@ -106,5 +105,19 @@ impl ops::Mul<f64> for &Color {
     type Output = Color;
     fn mul(self, other: f64) -> Color {
         Color::new(self.r() * other, self.g() * other, self.b() * other)
+    }
+}
+
+// Tests
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_write() {
+        Color::new(0.0, 0.3, 0.1).write(1);
+        Color::new(0.5, 0.4, 0.9).write(1);
+        Color::new(1.0, 0.5, 2.0).write(1);
     }
 }

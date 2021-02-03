@@ -30,13 +30,10 @@ mod utilities;
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IMAGE_WIDTH: u32 = 1800;
+    const IMAGE_WIDTH: u32 = 300;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: u32 = 500;
-    const MAX_DEPTH: u32 = 50;
-
-    // World
-    let world = random_scene();
+    const SAMPLES_PER_PIXEL: u32 = 30;
+    const MAX_DEPTH: u32 = 30;
 
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
@@ -44,7 +41,7 @@ fn main() {
     const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
     const FOV: f64 = 20.0;
     const APERTURE: f64 = 0.1;
-    let DIST_TO_FOCUS: f64 = 10.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
 
     let camera = Camera::new(
         LOOK_FROM,
@@ -56,10 +53,13 @@ fn main() {
         DIST_TO_FOCUS,
     );
 
+    // World
+    let world = random_scene();
+
     // Render
     let mut rng = rand::thread_rng();
 
-    let now = std::time::Instant::now();
+    let start_time = std::time::Instant::now();
 
     print!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
 
@@ -84,7 +84,10 @@ fn main() {
         }
     }
 
-    eprintln!("\nDone. Rendering took {:.3}s", now.elapsed().as_secs_f32());
+    eprintln!(
+        "\nDone. Rendering took {:.3}s",
+        start_time.elapsed().as_secs_f32()
+    );
 }
 
 fn random_scene() -> HittableList {

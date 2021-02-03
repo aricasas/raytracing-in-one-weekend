@@ -26,9 +26,9 @@ impl Hittable for Sphere {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared();
         let half_b = Vec3::dot(&oc, &ray.direction);
-        let c = oc.length_squared() - self.radius.powi(2);
+        let c = oc.length_squared() - self.radius * self.radius;
 
-        let discriminant = half_b.powi(2) - a * c;
+        let discriminant = half_b * half_b - a * c;
 
         if discriminant < 0.0 {
             // No hit
