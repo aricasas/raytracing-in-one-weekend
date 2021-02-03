@@ -69,6 +69,11 @@ impl ops::Add for &Color {
         )
     }
 }
+impl std::iter::Sum for Color {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::new(0.0, 0.0, 0.0), |a, b| a + b)
+    }
+}
 
 // Multiplication
 impl ops::Mul for Color {

@@ -8,7 +8,8 @@
     clippy::style
 )]
 use rand::Rng;
-use std::rc::Rc;
+use rayon::prelude::*;
+use std::sync::Arc;
 
 mod color;
 use color::Color;
@@ -65,16 +66,20 @@ fn main() {
     for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\rScanlines remaining: {:>width$}", j, width = 6);
         for i in 0..IMAGE_WIDTH {
-            let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+            let mut rays = Vec::new();
 
             for _ in 0..SAMPLES_PER_PIXEL {
                 let u = (f64::from(i) + rng.gen::<f64>()) / f64::from(IMAGE_WIDTH - 1);
                 let v = (f64::from(j) + rng.gen::<f64>()) / f64::from(IMAGE_HEIGHT - 1);
 
                 let ray = camera.get_ray(u, v);
-                pixel_color = pixel_color + Ray::calculate_color(&ray, &world, MAX_DEPTH);
+                rays.push(ray);
             }
 
+            let pixel_color = rays
+                .par_iter()
+                .map(|r| Ray::calculate_color(r, &world, MAX_DEPTH))
+                .sum::<Color>();
             pixel_color.write(SAMPLES_PER_PIXEL);
         }
     }
@@ -85,7 +90,7 @@ fn main() {
 fn random_scene() -> HittableList {
     let mut world = HittableList::new();
 
-    let ground_material = Rc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
+    let ground_material = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -104,15 +109,15 @@ fn random_scene() -> HittableList {
             );
 
             if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let sphere_material: Rc<dyn Material> = match choose_mat {
+                let sphere_material: Arc<dyn Material + Send + Sync> = match choose_mat {
                     // Lambertian
-                    x if x < 0.8 => Rc::new(Lambertian::new(Color::random() * Color::random())),
+                    x if x < 0.8 => Arc::new(Lambertian::new(Color::random() * Color::random())),
 
                     // Metal
-                    x if x < 0.95 => Rc::new(Metal::new(Color::random(), rng.gen_range(0.0..0.5))),
+                    x if x < 0.95 => Arc::new(Metal::new(Color::random(), rng.gen_range(0.0..0.5))),
 
                     // Glass
-                    _ => Rc::new(Dielectric::new(1.5)),
+                    _ => Arc::new(Dielectric::new(1.5)),
                 };
 
                 world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
@@ -120,21 +125,21 @@ fn random_scene() -> HittableList {
         }
     }
 
-    let material1 = Rc::new(Dielectric::new(1.5));
+    let material1 = Arc::new(Dielectric::new(1.5));
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, 1.0, 0.0),
         1.0,
         material1,
     )));
 
-    let material2 = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+    let material2 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
     world.add(Box::new(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
         1.0,
         material2,
     )));
 
-    let material3 = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
+    let material3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
     world.add(Box::new(Sphere::new(
         Vec3::new(4.0, 1.0, 0.0),
         1.0,

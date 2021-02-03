@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use super::color::Color;
 use super::material::lambertian::Lambertian;
@@ -15,7 +15,7 @@ pub struct HitRecord {
     pub normal: Vec3,
     /// If the ray hit the surface from outside then it's true. If it hit it from the inside, then it's false
     pub front_face: bool,
-    pub material: Rc<dyn Material>,
+    pub material: Arc<dyn Material + Send + Sync>,
 }
 impl HitRecord {
     pub fn new() -> Self {
@@ -25,7 +25,7 @@ impl HitRecord {
             p: Vec3::new(0.0, 0.0, 0.0),
             t: 0.0,
             normal: Vec3::new(0.0, 0.0, 0.0),
-            material: Rc::new(Lambertian {
+            material: Arc::new(Lambertian {
                 albedo: Color::new(0.0, 0.0, 0.0),
             }),
         }
@@ -46,7 +46,7 @@ pub trait Hittable {
 }
 
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable>>,
+    objects: Vec<Box<dyn Hittable + Send + Sync>>,
 }
 
 impl HittableList {
@@ -59,7 +59,7 @@ impl HittableList {
     pub fn clear(&mut self) {
         self.objects.clear();
     }
-    pub fn add(&mut self, object: Box<dyn Hittable>) {
+    pub fn add(&mut self, object: Box<dyn Hittable + Send + Sync>) {
         self.objects.push(object);
     }
 }

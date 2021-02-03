@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use super::hittable::{HitRecord, Hittable};
 use super::material::Material;
@@ -8,11 +8,11 @@ use super::vec3::Vec3;
 pub struct Sphere {
     center: Vec3,
     radius: f64,
-    pub material: Rc<dyn Material>,
+    pub material: Arc<dyn Material + Send + Sync>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f64, material: Rc<dyn Material>) -> Self {
+    pub fn new(center: Vec3, radius: f64, material: Arc<dyn Material + Send + Sync>) -> Self {
         Self {
             center,
             radius,
