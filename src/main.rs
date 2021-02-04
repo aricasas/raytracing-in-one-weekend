@@ -30,10 +30,10 @@ mod utilities;
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IMAGE_WIDTH: u32 = 300;
+    const IMAGE_WIDTH: u32 = 420;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: u32 = 30;
-    const MAX_DEPTH: u32 = 30;
+    const SAMPLES_PER_PIXEL: u32 = 100;
+    const MAX_DEPTH: u32 = 50;
 
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
