@@ -63,7 +63,7 @@ fn main() {
     // Render
     let start_time = std::time::Instant::now();
 
-    let mut image_colors = [Color::new(0.0, 0.0, 0.0); (IMAGE_WIDTH * IMAGE_HEIGHT) as usize];
+    let mut image_colors = vec![Color::new(0.0, 0.0, 0.0); (IMAGE_WIDTH * IMAGE_HEIGHT) as usize];
 
     image_colors
         .par_iter_mut()
