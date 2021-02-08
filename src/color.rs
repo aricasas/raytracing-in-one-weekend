@@ -31,19 +31,28 @@ impl Color {
         (start * (1.0 - t)) + (end * (t))
     }
 
-    pub fn write(&self, samples_per_pixel: u32) {
+    pub fn to_writeable_ints(&self, samples_per_pixel: u32) -> [u8; 3] {
         let samples_per_pixel = f64::from(samples_per_pixel);
 
         // Divide the color by the number of samples and gamma-correct for gamma=2.0
-        let mut r = (self.r() / samples_per_pixel).sqrt();
-        let mut g = (self.g() / samples_per_pixel).sqrt();
-        let mut b = (self.b() / samples_per_pixel).sqrt();
+        let r = (self.r() / samples_per_pixel).sqrt();
+        let g = (self.g() / samples_per_pixel).sqrt();
+        let b = (self.b() / samples_per_pixel).sqrt();
 
-        r = (255.0 * utilities::clamp(r, 0.0, 0.999)).round();
-        g = (255.0 * utilities::clamp(g, 0.0, 0.999)).round();
-        b = (255.0 * utilities::clamp(b, 0.0, 0.999)).round();
+        let r = (255.0 * utilities::clamp(r, 0.0, 0.999)).round() as u8;
+        let g = (255.0 * utilities::clamp(g, 0.0, 0.999)).round() as u8;
+        let b = (255.0 * utilities::clamp(b, 0.0, 0.999)).round() as u8;
 
-        println!("{:.0} {:.0} {:.0}", r, g, b);
+        [r, g, b]
+    }
+
+    pub fn write(&self, samples_per_pixel: u32) {
+        let color_values = self.to_writeable_ints(samples_per_pixel);
+
+        println!(
+            "{} {} {}",
+            color_values[0], color_values[1], color_values[2]
+        );
     }
 }
 
@@ -66,6 +75,11 @@ impl ops::Add for &Color {
             self.g() + other.g(),
             self.b() + other.b(),
         )
+    }
+}
+impl std::ops::AddAssign for Color {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
     }
 }
 impl std::iter::Sum for Color {

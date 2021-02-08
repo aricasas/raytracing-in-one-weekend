@@ -9,6 +9,10 @@
 )]
 use rand::Rng;
 use rayon::prelude::*;
+
+use std::fs::File;
+use std::io::BufWriter;
+use std::path::Path;
 use std::sync::Arc;
 
 mod color;
@@ -57,37 +61,62 @@ fn main() {
     let world = random_scene();
 
     // Render
-    let mut rng = rand::thread_rng();
-
     let start_time = std::time::Instant::now();
 
     print!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
 
-    for j in (0..IMAGE_HEIGHT).rev() {
-        eprint!("\rScanlines remaining: {:>width$}", j, width = 6);
-        for i in 0..IMAGE_WIDTH {
-            let mut rays = Vec::new();
+    let mut image_colors = [Color::new(0.0, 0.0, 0.0); (IMAGE_WIDTH * IMAGE_HEIGHT) as usize];
+
+    image_colors
+        .par_iter_mut()
+        .enumerate()
+        .for_each(|(i, pixel_color)| {
+            let mut rng = rand::thread_rng();
+
+            let (x, y) = get_image_coordinates(i as u32, IMAGE_WIDTH, IMAGE_HEIGHT);
 
             for _ in 0..SAMPLES_PER_PIXEL {
-                let u = (f64::from(i) + rng.gen::<f64>()) / f64::from(IMAGE_WIDTH - 1);
-                let v = (f64::from(j) + rng.gen::<f64>()) / f64::from(IMAGE_HEIGHT - 1);
+                let u = (f64::from(x) + rng.gen::<f64>()) / f64::from(IMAGE_WIDTH - 1);
+                let v = (f64::from(y) + rng.gen::<f64>()) / f64::from(IMAGE_HEIGHT - 1);
 
                 let ray = camera.get_ray(u, v);
-                rays.push(ray);
+                *pixel_color += Ray::calculate_color(&ray, &world, MAX_DEPTH);
             }
-
-            let pixel_color = rays
-                .par_iter()
-                .map(|r| Ray::calculate_color(r, &world, MAX_DEPTH))
-                .sum::<Color>();
-            pixel_color.write(SAMPLES_PER_PIXEL);
-        }
-    }
+        });
 
     eprintln!(
         "\nDone. Rendering took {:.3}s",
         start_time.elapsed().as_secs_f32()
     );
+
+    // Output image
+    let image_colors: Vec<u8> = image_colors
+        .iter()
+        .map(|c| c.to_writeable_ints(SAMPLES_PER_PIXEL))
+        .collect::<Vec<[u8; 3]>>()
+        .iter()
+        .flat_map(|array| array.iter())
+        .cloned()
+        .collect();
+
+    // taken from https://docs.rs/png/0.16.8/png/index.html#encoder
+    let path = Path::new("out.png");
+    let file = File::create(path).unwrap();
+    let w = BufWriter::new(file);
+
+    let mut encoder = png::Encoder::new(w, IMAGE_WIDTH, IMAGE_HEIGHT);
+    encoder.set_color(png::ColorType::RGB);
+    encoder.set_depth(png::BitDepth::Eight);
+    let mut writer = encoder.write_header().unwrap();
+
+    writer.write_image_data(&image_colors).unwrap(); // Save
+}
+
+const fn get_image_coordinates(i: u32, width: u32, height: u32) -> (u32, u32) {
+    let x = i as u32 % width;
+    let y = height - (i / width);
+
+    (x, y)
 }
 
 fn random_scene() -> HittableList {
