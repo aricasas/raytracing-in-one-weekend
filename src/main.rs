@@ -63,8 +63,6 @@ fn main() {
     // Render
     let start_time = std::time::Instant::now();
 
-    print!("P3\n{} {}\n255\n", IMAGE_WIDTH, IMAGE_HEIGHT);
-
     let mut image_colors = [Color::new(0.0, 0.0, 0.0); (IMAGE_WIDTH * IMAGE_HEIGHT) as usize];
 
     image_colors
