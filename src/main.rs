@@ -180,3 +180,16 @@ fn random_scene() -> HittableList {
 
     world
 }
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_get_image_coordinates() {
+        assert_eq!(get_image_coordinates(0, 20, 10), (0, 10));
+        assert_eq!(get_image_coordinates(24, 20, 10), (4, 9));
+        assert_eq!(get_image_coordinates(199, 20, 10), (19, 1));
+    }
+}
