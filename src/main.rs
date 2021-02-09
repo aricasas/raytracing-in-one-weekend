@@ -113,7 +113,7 @@ fn render(
                 let v = (f64::from(y) + rng.gen::<f64>()) / f64::from(image_height - 1);
 
                 let ray = camera.get_ray(u, v);
-                *pixel_color += Ray::calculate_color(&ray, world, max_depth);
+                *pixel_color += ray.calculate_color(world, max_depth);
             }
         });
 

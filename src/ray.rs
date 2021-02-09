@@ -18,25 +18,27 @@ impl Ray {
         self.origin + (self.direction * t)
     }
 
-    pub fn calculate_color(ray: &Self, world: &HittableList, depth: u32) -> Color {
+    pub fn calculate_color(&self, world: &HittableList, depth: u32) -> Color {
         // If ray has bounced too many times
         if depth == 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
 
-        let record = world.hit(ray, 0.0001, f64::INFINITY);
+        let record = world.hit(self, 0.0001, f64::INFINITY);
 
         if record.hit_anything {
-            let scatter_record = record.material.scatter(ray, &record);
+            let scatter_record = record.material.scatter(self, &record);
             if scatter_record.scattered {
                 return scatter_record.attenuation
-                    * Self::calculate_color(&scatter_record.scattered_ray, world, depth - 1);
+                    * scatter_record
+                        .scattered_ray
+                        .calculate_color(world, depth - 1);
             }
             return Color::new(0.0, 0.0, 0.0);
         }
 
         // If no hits
-        let unit_direction = ray.direction.unit_vector();
+        let unit_direction = self.direction.unit_vector();
         Color::linear_blend(
             0.5 * (unit_direction.y() + 1.0),
             &Color::new(1.0, 1.0, 1.0),
