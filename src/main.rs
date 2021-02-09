@@ -87,9 +87,26 @@ fn main() {
         start_time.elapsed().as_secs_f32()
     );
 
+    // Render
+    let start_time = std::time::Instant::now();
+
+    let image_colors = render(
+        &camera,
+        &world,
+        IMAGE_WIDTH,
+        IMAGE_HEIGHT,
+        SAMPLES_PER_PIXEL,
+        MAX_DEPTH,
+    );
+
+    eprintln!(
+        "\nDone. Rendering took {:.3}s",
+        start_time.elapsed().as_secs_f32()
+    );
+
     // Output image
     let image_colors: Vec<u8> = image_colors
-        .iter()
+        .par_iter()
         .map(|c| c.to_writeable_ints(SAMPLES_PER_PIXEL))
         .collect::<Vec<[u8; 3]>>()
         .iter()
@@ -97,17 +114,52 @@ fn main() {
         .cloned()
         .collect();
 
-    // taken from https://docs.rs/png/0.16.8/png/index.html#encoder
+    output_png(&image_colors, IMAGE_WIDTH, IMAGE_HEIGHT);
+}
+
+fn render(
+    camera: &Camera,
+    world: &HittableList,
+    image_width: u32,
+    image_height: u32,
+    samples_per_pixel: u32,
+    max_depth: u32,
+) -> Vec<Color> {
+    let mut image_colors = vec![Color::new(0.0, 0.0, 0.0); (image_width * image_height) as usize];
+
+    image_colors
+        .par_iter_mut()
+        .enumerate()
+        .for_each(|(i, pixel_color)| {
+            let mut rng = rand::thread_rng();
+
+            let (x, y) = get_image_coordinates(i as u32, image_width, image_height);
+
+            for _ in 0..samples_per_pixel {
+                let u = (f64::from(x) + rng.gen::<f64>()) / f64::from(image_width - 1);
+                let v = (f64::from(y) + rng.gen::<f64>()) / f64::from(image_height - 1);
+
+                let ray = camera.get_ray(u, v);
+                *pixel_color += Ray::calculate_color(&ray, world, max_depth);
+            }
+        });
+
+    image_colors
+}
+
+/// Writes the image data to a png file called 'out.png'
+fn output_png(image_data: &[u8], image_width: u32, image_height: u32) {
+    // code taken from https://docs.rs/png/0.16.8/png/index.html#encoder
     let path = Path::new("out.png");
     let file = File::create(path).unwrap();
     let w = BufWriter::new(file);
 
-    let mut encoder = png::Encoder::new(w, IMAGE_WIDTH, IMAGE_HEIGHT);
+    let mut encoder = png::Encoder::new(w, image_width, image_height);
     encoder.set_color(png::ColorType::RGB);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();
 
-    writer.write_image_data(&image_colors).unwrap(); // Save
+    writer.write_image_data(image_data).unwrap();
 }
 
 const fn get_image_coordinates(i: u32, width: u32, height: u32) -> (u32, u32) {
@@ -116,7 +168,6 @@ const fn get_image_coordinates(i: u32, width: u32, height: u32) -> (u32, u32) {
 
     (x, y)
 }
-
 fn random_scene() -> HittableList {
     let mut world = HittableList::new();
 
