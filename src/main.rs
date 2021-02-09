@@ -63,33 +63,6 @@ fn main() {
     // Render
     let start_time = std::time::Instant::now();
 
-    let mut image_colors = vec![Color::new(0.0, 0.0, 0.0); (IMAGE_WIDTH * IMAGE_HEIGHT) as usize];
-
-    image_colors
-        .par_iter_mut()
-        .enumerate()
-        .for_each(|(i, pixel_color)| {
-            let mut rng = rand::thread_rng();
-
-            let (x, y) = get_image_coordinates(i as u32, IMAGE_WIDTH, IMAGE_HEIGHT);
-
-            for _ in 0..SAMPLES_PER_PIXEL {
-                let u = (f64::from(x) + rng.gen::<f64>()) / f64::from(IMAGE_WIDTH - 1);
-                let v = (f64::from(y) + rng.gen::<f64>()) / f64::from(IMAGE_HEIGHT - 1);
-
-                let ray = camera.get_ray(u, v);
-                *pixel_color += Ray::calculate_color(&ray, &world, MAX_DEPTH);
-            }
-        });
-
-    eprintln!(
-        "\nDone. Rendering took {:.3}s",
-        start_time.elapsed().as_secs_f32()
-    );
-
-    // Render
-    let start_time = std::time::Instant::now();
-
     let image_colors = render(
         &camera,
         &world,
