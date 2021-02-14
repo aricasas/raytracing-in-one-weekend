@@ -1,10 +1,9 @@
 use rand::Rng;
 use std::ops;
 
-use super::utilities;
 use super::vec3::Vec3;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Clone, Copy)]
 pub struct Color(Vec3);
 
 impl Color {
@@ -39,9 +38,9 @@ impl Color {
         let g = (self.g() / samples_per_pixel).sqrt();
         let b = (self.b() / samples_per_pixel).sqrt();
 
-        let r = (255.0 * utilities::clamp(r, 0.0, 0.999)).round() as u8;
-        let g = (255.0 * utilities::clamp(g, 0.0, 0.999)).round() as u8;
-        let b = (255.0 * utilities::clamp(b, 0.0, 0.999)).round() as u8;
+        let r = (255.0 * r.clamp(0.0, 0.999)).round() as u8;
+        let g = (255.0 * g.clamp(0.0, 0.999)).round() as u8;
+        let b = (255.0 * b.clamp(0.0, 0.999)).round() as u8;
 
         [r, g, b]
     }
@@ -125,7 +124,6 @@ impl ops::Mul<f64> for &Color {
 // Tests
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]

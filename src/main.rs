@@ -10,6 +10,7 @@
 use rand::Rng;
 use rayon::prelude::*;
 
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
@@ -20,7 +21,6 @@ use color::Color;
 mod hittable;
 use hittable::HittableList;
 mod ray;
-use ray::Ray;
 mod sphere;
 use sphere::Sphere;
 mod vec3;
@@ -29,12 +29,11 @@ mod camera;
 use camera::Camera;
 mod material;
 use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal, Material};
-mod utilities;
 
 fn main() {
     // Image
-    const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IMAGE_WIDTH: u32 = 420;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: u32 = 640;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
     const SAMPLES_PER_PIXEL: u32 = 100;
     const MAX_DEPTH: u32 = 50;
@@ -58,12 +57,12 @@ fn main() {
     );
 
     // World
-    let world = random_scene();
+    let world = generate_random_scene();
 
     // Render
     let start_time = std::time::Instant::now();
 
-    let image_colors = render(
+    let rendered_colors = render(
         &camera,
         &world,
         IMAGE_WIDTH,
@@ -72,13 +71,10 @@ fn main() {
         MAX_DEPTH,
     );
 
-    eprintln!(
-        "\nDone. Rendering took {:.3}s",
-        start_time.elapsed().as_secs_f32()
-    );
+    eprintln!("\n{}", get_elapsed_time_message(start_time.elapsed()));
 
     // Output image
-    let image_colors: Vec<u8> = image_colors
+    let image_colors: Vec<u8> = rendered_colors
         .par_iter()
         .map(|c| c.to_writeable_ints(SAMPLES_PER_PIXEL))
         .collect::<Vec<[u8; 3]>>()
@@ -87,7 +83,7 @@ fn main() {
         .cloned()
         .collect();
 
-    output_png(&image_colors, IMAGE_WIDTH, IMAGE_HEIGHT);
+    output_png("out.png", &image_colors, IMAGE_WIDTH, IMAGE_HEIGHT);
 }
 
 fn render(
@@ -100,9 +96,15 @@ fn render(
 ) -> Vec<Color> {
     let mut image_colors = vec![Color::new(0.0, 0.0, 0.0); (image_width * image_height) as usize];
 
+    let bar = ProgressBar::new(u64::from(image_width * image_height));
+    bar.set_style(
+        ProgressStyle::default_bar().template("[{elapsed_precise}] Rendering {percent}% done."),
+    );
+
     image_colors
         .par_iter_mut()
         .enumerate()
+        .progress_with(bar)
         .for_each(|(i, pixel_color)| {
             let mut rng = rand::thread_rng();
 
@@ -120,31 +122,18 @@ fn render(
     image_colors
 }
 
-/// Writes the image data to a png file called 'out.png'
-fn output_png(image_data: &[u8], image_width: u32, image_height: u32) {
-    // code taken from https://docs.rs/png/0.16.8/png/index.html#encoder
-    let path = Path::new("out.png");
-    let file = File::create(path).unwrap();
-    let w = BufWriter::new(file);
-
-    let mut encoder = png::Encoder::new(w, image_width, image_height);
-    encoder.set_color(png::ColorType::RGB);
-    encoder.set_depth(png::BitDepth::Eight);
-    let mut writer = encoder.write_header().unwrap();
-
-    writer.write_image_data(image_data).unwrap();
-}
-
-fn random_scene() -> HittableList {
+fn generate_random_scene() -> HittableList {
     let mut world = HittableList::new();
 
+    // Ground
     let ground_material = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
-    world.add(Box::new(Sphere::new(
+    world.push(Box::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
     )));
 
+    // Random spheres
     let mut rng = rand::thread_rng();
 
     for a in -11..11 {
@@ -158,37 +147,38 @@ fn random_scene() -> HittableList {
 
             if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 let sphere_material: Arc<dyn Material + Send + Sync> = match choose_mat {
-                    // Lambertian
+                    // Lambertian 80% chance
                     x if x < 0.8 => Arc::new(Lambertian::new(Color::random() * Color::random())),
 
-                    // Metal
+                    // Metal 15% chance
                     x if x < 0.95 => Arc::new(Metal::new(Color::random(), rng.gen_range(0.0..0.5))),
 
-                    // Glass
+                    // Glass 5% chance
                     _ => Arc::new(Dielectric::new(1.5)),
                 };
 
-                world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                world.push(Box::new(Sphere::new(center, 0.2, sphere_material)));
             }
         }
     }
 
+    // Three big spheres
     let material1 = Arc::new(Dielectric::new(1.5));
-    world.add(Box::new(Sphere::new(
+    world.push(Box::new(Sphere::new(
         Vec3::new(0.0, 1.0, 0.0),
         1.0,
         material1,
     )));
 
     let material2 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
-    world.add(Box::new(Sphere::new(
+    world.push(Box::new(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
         1.0,
         material2,
     )));
 
     let material3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Box::new(Sphere::new(
+    world.push(Box::new(Sphere::new(
         Vec3::new(4.0, 1.0, 0.0),
         1.0,
         material3,
@@ -196,17 +186,61 @@ fn random_scene() -> HittableList {
 
     world
 }
+
+/// Writes the image data to a png file
+fn output_png(filename: &str, image_data: &[u8], image_width: u32, image_height: u32) {
+    // code taken from https://docs.rs/png/0.16.8/png/index.html#encoder
+    let path = Path::new(filename);
+    let file = File::create(path).unwrap();
+    let w = BufWriter::new(file);
+
+    let mut encoder = png::Encoder::new(w, image_width, image_height);
+    encoder.set_color(png::ColorType::RGB);
+    encoder.set_depth(png::BitDepth::Eight);
+    let mut writer = encoder.write_header().unwrap();
+
+    writer.write_image_data(image_data).unwrap();
+}
+
 const fn get_image_coordinates(i: u32, width: u32, height: u32) -> (u32, u32) {
     let x = i as u32 % width;
     let y = height - (i / width) - 1;
 
     (x, y)
 }
+fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
+    let mut seconds_passed = start_time.as_secs();
+
+    let hours_passed = seconds_passed / 3600;
+    seconds_passed %= 3600;
+
+    let minutes_passed = seconds_passed / 60;
+    seconds_passed %= 60;
+
+    let hours_passed = if hours_passed > 0 {
+        format!("{} hours, ", hours_passed)
+    } else {
+        String::new()
+    };
+    let minutes_passed = if minutes_passed > 0 {
+        format!("{} minutes, and ", minutes_passed)
+    } else {
+        String::new()
+    };
+
+    format!(
+        "Done. Rendering took {}{}{}.{:0>3} seconds.",
+        hours_passed,
+        minutes_passed,
+        seconds_passed,
+        start_time.subsec_millis()
+    )
+}
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    use std::time::Duration;
 
     #[test]
     fn test_get_image_coordinates() {
@@ -233,5 +267,60 @@ mod tests {
         //   0 |  180   181   182   183   184   185   186   187   188   189   190   191   192   193   194   195   196   197   198   199
         //      ------------------------------------------------------------------------------------------------------------------------> x
         //         0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19
+    }
+    #[test]
+    fn test_get_elapsed_time_message() {
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(0)),
+            String::from("Done. Rendering took 0.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs_f32(0.001)),
+            String::from("Done. Rendering took 0.001 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs_f32(0.5)),
+            String::from("Done. Rendering took 0.500 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs_f32(0.999)),
+            String::from("Done. Rendering took 0.999 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(15)),
+            String::from("Done. Rendering took 15.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(59)),
+            String::from("Done. Rendering took 59.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(60)),
+            String::from("Done. Rendering took 1 minutes, and 0.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(61)),
+            String::from("Done. Rendering took 1 minutes, and 1.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(1000)),
+            String::from("Done. Rendering took 16 minutes, and 40.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(3599)),
+            String::from("Done. Rendering took 59 minutes, and 59.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(3600)),
+            String::from("Done. Rendering took 1 hours, 0.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(3601)),
+            String::from("Done. Rendering took 1 hours, 1.000 seconds.")
+        );
+        assert_eq!(
+            get_elapsed_time_message(Duration::from_secs(50_000)),
+            String::from("Done. Rendering took 13 hours, 53 minutes, and 20.000 seconds.")
+        );
     }
 }

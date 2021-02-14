@@ -4,7 +4,6 @@ use crate::material::{Material, ScatterRecord};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-#[derive(Copy, Clone)]
 pub struct Metal {
     pub albedo: Color,
     pub fuzz: f64,
@@ -30,7 +29,7 @@ impl Material for Metal {
             reflected + Vec3::random_in_unit_sphere() * self.fuzz,
         );
         scatter_record.attenuation = self.albedo;
-        scatter_record.scattered =
+        scatter_record.did_scatter =
             Vec3::dot(&scatter_record.scattered_ray.direction, &record.normal) > 0.0;
 
         scatter_record

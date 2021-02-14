@@ -49,7 +49,7 @@ impl Material for Dielectric {
         };
 
         scatter_record.scattered_ray = Ray::new(record.p, direction);
-        scatter_record.scattered = true;
+        scatter_record.did_scatter = true;
 
         scatter_record
     }

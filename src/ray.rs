@@ -13,22 +13,25 @@ impl Ray {
         Self { origin, direction }
     }
 
-    /// Returns the position of the ray when it travels "t" in its direction
+    /// Returns the position of the ray when it travels `t` in its direction.
+    /// Based on the ray formula 'P(t)=A+tb'
     pub fn at(&self, t: f64) -> Vec3 {
         self.origin + (self.direction * t)
     }
 
+    /// Calculates the final color of the ray
     pub fn calculate_color(&self, world: &HittableList, depth: u32) -> Color {
         // If ray has bounced too many times
         if depth == 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
 
-        let record = world.hit(self, 0.0001, f64::INFINITY);
+        let hit_record = world.hit(self, 0.0001, f64::INFINITY);
 
-        if record.hit_anything {
-            let scatter_record = record.material.scatter(self, &record);
-            if scatter_record.scattered {
+        if hit_record.hit_anything {
+            let scatter_record = hit_record.material.scatter(self, &hit_record);
+
+            if scatter_record.did_scatter {
                 return scatter_record.attenuation
                     * scatter_record
                         .scattered_ray
@@ -37,7 +40,7 @@ impl Ray {
             return Color::new(0.0, 0.0, 0.0);
         }
 
-        // If no hits
+        // If no hits, return a blueish color as the sky
         let unit_direction = self.direction.unit_vector();
         Color::linear_blend(
             0.5 * (unit_direction.y() + 1.0),

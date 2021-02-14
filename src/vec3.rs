@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::ops;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Vec3(f64, f64, f64);
 
 impl Vec3 {
@@ -24,11 +24,13 @@ impl Vec3 {
         (self.x().abs() < s) && (self.y().abs() < s) && (self.z().abs() < s)
     }
 
+    /// Returns a `Vec3` with random x, y, and z values within the range [0,1)
     pub fn random() -> Self {
         let mut rng = rand::thread_rng();
 
         Self::new(rng.gen(), rng.gen(), rng.gen())
     }
+    /// Returns a `Vec3` with random x, y, and z values within the range specified
     pub fn random_min_max(min: f64, max: f64) -> Self {
         let mut rng = rand::thread_rng();
 
@@ -58,6 +60,7 @@ impl Vec3 {
             return p;
         }
     }
+    /// Random `Vec3` with length 1
     pub fn random_unit_vector() -> Self {
         Self::random_in_unit_sphere().unit_vector()
     }
@@ -85,10 +88,12 @@ impl Vec3 {
     pub fn unit_vector(&self) -> Self {
         self / self.length()
     }
+    /// Dot product of two `Vec3`
     pub fn dot(u: &Self, v: &Self) -> f64 {
         // (u.0 * v.0) + (u.1 * v.1) + (u.2 * v.2)
         u.0.mul_add(v.0, u.1.mul_add(v.1, u.2 * v.2))
     }
+    /// Cross product of two `Vec3`
     pub fn cross(u: &Self, v: &Self) -> Self {
         Self::new(
             u.1 * v.2 - u.2 * v.1,
@@ -247,7 +252,6 @@ impl ops::Div<f64> for &Vec3 {
 // Tests
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]
