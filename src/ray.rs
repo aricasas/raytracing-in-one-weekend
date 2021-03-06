@@ -31,12 +31,11 @@ impl Ray {
         if let Some(intersection) = hit_record {
             let scatter_record = intersection.material.scatter(self, &intersection);
 
-            if scatter_record.did_scatter {
-                return scatter_record.attenuation
-                    * scatter_record
-                        .scattered_ray
-                        .calculate_color(world, depth - 1);
+            if let Some(scatter) = scatter_record {
+                return scatter.attenuation
+                    * scatter.scattered_ray.calculate_color(world, depth - 1);
             }
+
             return Color::new(0.0, 0.0, 0.0);
         }
 

@@ -19,19 +19,21 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, record: &HitRecord) -> ScatterRecord {
+    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterRecord> {
         let reflected = Vec3::reflect(&ray.direction.unit_vector(), &record.normal);
 
-        let mut scatter_record = ScatterRecord::new();
-
-        scatter_record.scattered_ray = Ray::new(
-            record.p,
-            reflected + Vec3::random_in_unit_sphere() * self.fuzz,
+        let scatter_record = ScatterRecord::new(
+            self.albedo,
+            Ray::new(
+                record.p,
+                reflected + Vec3::random_in_unit_sphere() * self.fuzz,
+            ),
         );
-        scatter_record.attenuation = self.albedo;
-        scatter_record.did_scatter =
-            Vec3::dot(&scatter_record.scattered_ray.direction, &record.normal) > 0.0;
 
-        scatter_record
+        if Vec3::dot(&scatter_record.scattered_ray.direction, &record.normal) > 0.0 {
+            Some(scatter_record)
+        } else {
+            None
+        }
     }
 }
