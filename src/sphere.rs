@@ -22,7 +22,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> HitRecord {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         // Since a sphere is a quadratic equation, we can solve it
         // using the quadratic formula.
         // For this ray intersection it's actually a version that's a bit simplified
@@ -45,7 +45,7 @@ impl Hittable for Sphere {
         // if (d > 0) => Two distinct real solutions (ray hits sphere on two points)
         if discriminant < 0.0 {
             // No hit. Or ray is tangent to the sphere, but we ignore those
-            return HitRecord::new();
+            return None;
         }
         // Hit!
 
@@ -58,20 +58,15 @@ impl Hittable for Sphere {
             root = (-half_b + discriminant_sqrt) / a;
             if (root < t_min) || (root > t_max) {
                 // No hit within bounds
-                return HitRecord::new();
+                return None;
             }
         }
 
-        let mut record = HitRecord::new();
-
-        record.hit_anything = true;
-        record.t = root;
-        record.p = ray.at(record.t);
-        record.material = self.material.clone();
+        let mut record = HitRecord::new(root, ray.at(root), self.material.clone());
 
         let outward_normal = (record.p - self.center) / self.radius;
         record.set_face_normal(ray, outward_normal);
 
-        record
+        Some(record)
     }
 }

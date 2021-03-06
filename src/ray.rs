@@ -28,8 +28,8 @@ impl Ray {
 
         let hit_record = world.hit(self, 0.0001, f64::INFINITY);
 
-        if hit_record.hit_anything {
-            let scatter_record = hit_record.material.scatter(self, &hit_record);
+        if let Some(intersection) = hit_record {
+            let scatter_record = intersection.material.scatter(self, &intersection);
 
             if scatter_record.did_scatter {
                 return scatter_record.attenuation
