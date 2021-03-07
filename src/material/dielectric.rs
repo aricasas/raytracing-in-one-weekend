@@ -45,8 +45,10 @@ impl Material for Dielectric {
             Vec3::refract(&unit_direction, &record.normal, refraction_ratio)
         };
 
-        let scatter_record =
-            ScatterRecord::new(Color::new(1.0, 1.0, 1.0), Ray::new(record.p, direction));
+        let scatter_record = ScatterRecord::new(
+            Color::new(1.0, 1.0, 1.0),
+            Ray::new(record.p, direction, ray.time),
+        );
 
         Some(scatter_record)
     }

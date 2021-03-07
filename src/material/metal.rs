@@ -27,6 +27,7 @@ impl Material for Metal {
             Ray::new(
                 record.p,
                 reflected + Vec3::random_in_unit_sphere() * self.fuzz,
+                ray.time,
             ),
         );
 

@@ -6,11 +6,16 @@ use super::vec3::Vec3;
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
+    pub time: f64,
 }
 
 impl Ray {
-    pub const fn new(origin: Vec3, direction: Vec3) -> Self {
-        Self { origin, direction }
+    pub const fn new(origin: Vec3, direction: Vec3, time: f64) -> Self {
+        Self {
+            origin,
+            direction,
+            time,
+        }
     }
 
     /// Returns the position of the ray when it travels `t` in its direction.
@@ -55,13 +60,13 @@ mod tests {
 
     #[test]
     fn test_at() {
-        let ray = Ray::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 1.0, 0.0), 0.0);
         assert_eq!(ray.at(3.0), Vec3::new(0.0, 3.0, 0.0));
 
-        let ray = Ray::new(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.8, 0.6, 0.0));
+        let ray = Ray::new(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.8, 0.6, 0.0), 0.0);
         assert_eq!(ray.at(5.0), Vec3::new(5.0, 4.0, 1.0));
 
-        let ray = Ray::new(Vec3::new(5.0, 4.0, 1.0), Vec3::new(0.8, 0.6, 0.0));
+        let ray = Ray::new(Vec3::new(5.0, 4.0, 1.0), Vec3::new(0.8, 0.6, 0.0), 0.0);
         assert_eq!(ray.at(-5.0), Vec3::new(1.0, 1.0, 1.0));
     }
 }

@@ -23,6 +23,8 @@ use hittable::HittableList;
 mod ray;
 mod sphere;
 use sphere::Sphere;
+mod moving_sphere;
+use moving_sphere::MovingSphere;
 mod vec3;
 use vec3::Vec3;
 mod camera;
@@ -54,6 +56,7 @@ fn main() {
         ASPECT_RATIO,
         APERTURE,
         DIST_TO_FOCUS,
+        (0.0, 1.0),
     );
 
     // World
@@ -140,10 +143,11 @@ fn generate_random_scene() -> HittableList {
         for b in -11..11 {
             let choose_mat: f64 = rng.gen();
             let center = Vec3::new(
-                0.9_f64.mul_add(rng.gen::<f64>(), f64::from(a)),
+                0.9_f64.mul_add(rng.gen(), f64::from(a)),
                 0.2,
-                0.9_f64.mul_add(rng.gen::<f64>(), f64::from(b)),
+                0.9_f64.mul_add(rng.gen(), f64::from(b)),
             );
+            let center2 = center + Vec3::new(0.0, rng.gen(), 0.0);
 
             if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 let sphere_material: Arc<dyn Material + Send + Sync> = match choose_mat {
@@ -157,7 +161,12 @@ fn generate_random_scene() -> HittableList {
                     _ => Arc::new(Dielectric::new(1.5)),
                 };
 
-                world.push(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                world.push(Box::new(MovingSphere::new(
+                    (center, center2),
+                    0.2,
+                    sphere_material,
+                    (0.0, 1.0),
+                )));
             }
         }
     }

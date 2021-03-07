@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use super::ray::Ray;
 use super::vec3::Vec3;
 
@@ -10,6 +12,7 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     w: Vec3,
+    time: (f64, f64),
 }
 
 impl Camera {
@@ -21,6 +24,7 @@ impl Camera {
         aspect_ratio: f64,
         aperture: f64,
         focus_distance: f64,
+        time: (f64, f64),
     ) -> Self {
         let theta = vfov.to_radians();
         let h = (theta / 2.0).tan();
@@ -46,6 +50,7 @@ impl Camera {
             u,
             v,
             w,
+            time,
         }
     }
 
@@ -58,6 +63,11 @@ impl Camera {
             self.lower_left_corner + (self.horizontal * s) + (self.vertical * t)
                 - self.origin
                 - offset,
+            if self.time.0 == self.time.1 {
+                self.time.0
+            } else {
+                rand::thread_rng().gen_range(self.time.0..self.time.1)
+            },
         )
     }
 }
