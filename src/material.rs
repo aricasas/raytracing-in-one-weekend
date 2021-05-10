@@ -9,7 +9,7 @@ pub mod metal;
 /// A trait that all materials must implement
 ///
 /// Defines the scattering behaviour of that material
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterRecord>;
 }
 

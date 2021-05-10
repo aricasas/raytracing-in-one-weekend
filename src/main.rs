@@ -14,30 +14,32 @@ use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
-use std::sync::Arc;
 
 mod color;
 use color::Color;
 mod hittable;
-use hittable::HittableList;
+use hittable::{Hittable, HittableList};
 mod ray;
 mod sphere;
 use sphere::Sphere;
 mod moving_sphere;
 use moving_sphere::MovingSphere;
+mod aabb;
+mod bvh;
+use bvh::BvhNode;
 mod vec3;
 use vec3::Vec3;
 mod camera;
 use camera::Camera;
 mod material;
-use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal, Material};
+use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u32 = 640;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: u32 = 50;
+    const SAMPLES_PER_PIXEL: u32 = 10;
     const MAX_DEPTH: u32 = 50;
 
     // Camera
@@ -89,9 +91,9 @@ fn main() {
     output_png("out.png", &image_colors, IMAGE_WIDTH, IMAGE_HEIGHT);
 }
 
-fn render(
+fn render<T: Hittable>(
     camera: &Camera,
-    world: &HittableList,
+    world: &T,
     image_width: u32,
     image_height: u32,
     samples_per_pixel: u32,
@@ -125,16 +127,16 @@ fn render(
     image_colors
 }
 
-fn generate_random_scene() -> HittableList {
+fn generate_random_scene() -> BvhNode {
     let mut world = HittableList::new();
 
     // Ground
-    let ground_material = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
-    world.push(Box::new(Sphere::new(
+    let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
+    world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
-    )));
+    ));
 
     // Random spheres
     let mut rng = rand::thread_rng();
@@ -143,57 +145,68 @@ fn generate_random_scene() -> HittableList {
         for b in -11..11 {
             let choose_mat: f64 = rng.gen();
             let center = Vec3::new(
-                0.9_f64.mul_add(rng.gen(), f64::from(a)),
+                0.9_f64 * rng.gen::<f64>() + f64::from(a),
                 0.2,
-                0.9_f64.mul_add(rng.gen(), f64::from(b)),
+                0.9 * rng.gen::<f64>() + f64::from(b),
             );
             let center2 = center + Vec3::new(0.0, rng.gen(), 0.0);
 
             if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let sphere_material: Arc<dyn Material + Send + Sync> = match choose_mat {
+                match choose_mat {
                     // Lambertian 80% chance
-                    x if x < 0.8 => Arc::new(Lambertian::new(Color::random() * Color::random())),
+                    x if x < 0.8 => {
+                        let sphere_material = Lambertian::new(Color::random() * Color::random());
+
+                        world.push(Sphere::new(
+                            center,
+                            // (center, center2),
+                            0.2,
+                            sphere_material,
+                            // (0.0, 1.0),
+                        ));
+                    }
 
                     // Metal 15% chance
-                    x if x < 0.95 => Arc::new(Metal::new(Color::random(), rng.gen_range(0.0..0.5))),
+                    x if x < 0.95 => {
+                        let sphere_material = Metal::new(Color::random(), rng.gen_range(0.0..0.5));
+
+                        world.push(Sphere::new(
+                            center,
+                            // (center, center2),
+                            0.2,
+                            sphere_material,
+                            // (0.0, 1.0),
+                        ));
+                    }
 
                     // Glass 5% chance
-                    _ => Arc::new(Dielectric::new(1.5)),
-                };
+                    _ => {
+                        let sphere_material = Dielectric::new(1.5);
 
-                world.push(Box::new(MovingSphere::new(
-                    (center, center2),
-                    0.2,
-                    sphere_material,
-                    (0.0, 1.0),
-                )));
+                        world.push(Sphere::new(
+                            center,
+                            // (center, center2),
+                            0.2,
+                            sphere_material,
+                            // (0.0, 1.0),
+                        ));
+                    }
+                };
             }
         }
     }
 
     // Three big spheres
-    let material1 = Arc::new(Dielectric::new(1.5));
-    world.push(Box::new(Sphere::new(
-        Vec3::new(0.0, 1.0, 0.0),
-        1.0,
-        material1,
-    )));
+    let material1 = Dielectric::new(1.5);
+    world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
-    world.push(Box::new(Sphere::new(
-        Vec3::new(-4.0, 1.0, 0.0),
-        1.0,
-        material2,
-    )));
+    let material2 = Lambertian::new(Color::new(0.4, 0.2, 0.1));
+    world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
-    let material3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
-    world.push(Box::new(Sphere::new(
-        Vec3::new(4.0, 1.0, 0.0),
-        1.0,
-        material3,
-    )));
+    let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
+    world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
 
-    world
+    BvhNode::new(world.to_vec(), (0.0, 1.0))
 }
 
 /// Writes the image data to a png file

@@ -43,9 +43,9 @@ impl Camera {
 
         Self {
             origin,
+            lower_left_corner,
             horizontal,
             vertical,
-            lower_left_corner,
             lens_radius,
             u,
             v,

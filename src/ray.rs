@@ -1,5 +1,5 @@
 use super::color::Color;
-use super::hittable::{Hittable, HittableList};
+use super::hittable::Hittable;
 use super::vec3::Vec3;
 
 #[derive(Debug)]
@@ -25,7 +25,7 @@ impl Ray {
     }
 
     /// Calculates the final color of the ray
-    pub fn calculate_color(&self, world: &HittableList, depth: u32) -> Color {
+    pub fn calculate_color<T: Hittable>(&self, world: &T, depth: u32) -> Color {
         // If ray has bounced too many times
         if depth == 0 {
             return Color::new(0.0, 0.0, 0.0);

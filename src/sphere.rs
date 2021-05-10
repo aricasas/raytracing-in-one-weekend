@@ -1,18 +1,18 @@
-use std::sync::Arc;
-
+use super::aabb::Aabb;
 use super::hittable::{HitRecord, Hittable};
 use super::material::Material;
 use super::ray::Ray;
 use super::vec3::Vec3;
 
-pub struct Sphere {
+#[derive(Clone)]
+pub struct Sphere<T: Material + Clone + 'static> {
     center: Vec3,
     radius: f64,
-    pub material: Arc<dyn Material + Send + Sync>,
+    pub material: T,
 }
 
-impl Sphere {
-    pub fn new(center: Vec3, radius: f64, material: Arc<dyn Material + Send + Sync>) -> Self {
+impl<T: Material + Clone + 'static> Sphere<T> {
+    pub fn new(center: Vec3, radius: f64, material: T) -> Self {
         Self {
             center,
             radius,
@@ -20,8 +20,7 @@ impl Sphere {
         }
     }
 }
-
-impl Hittable for Sphere {
+impl<T: Material + Clone + 'static> Hittable for Sphere<T> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         // Since a sphere is a quadratic equation, we can solve it
         // using the quadratic formula.
@@ -68,5 +67,12 @@ impl Hittable for Sphere {
         record.set_face_normal(ray, outward_normal);
 
         Some(record)
+    }
+
+    fn bounding_box(&self, _time: (f64, f64)) -> Option<Aabb> {
+        Some(Aabb::new(
+            self.center - Vec3::new(self.radius, self.radius, self.radius),
+            self.center + Vec3::new(self.radius, self.radius, self.radius),
+        ))
     }
 }

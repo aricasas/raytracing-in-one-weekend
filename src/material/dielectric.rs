@@ -6,7 +6,7 @@ use crate::material::{Material, ScatterRecord};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Dielectric {
     pub refraction_index: f64,
 }
@@ -19,8 +19,7 @@ impl Dielectric {
         // Use Schlick's approximation for reflectance.
         let r0 = ((1.0 - refraction_index) / (1.0 + refraction_index)).powi(2);
 
-        // r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
-        (1.0 - r0).mul_add((1.0 - cosine).powi(5), r0)
+        r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
     }
 }
 

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use super::aabb::Aabb;
 use super::material::Material;
 use super::ray::Ray;
 use super::vec3::Vec3;
@@ -16,15 +17,15 @@ pub struct HitRecord {
     /// If the ray hit the surface from outside then it's `true`. If it hit it from the inside, then it's `false`.
     pub front_face: bool,
     /// The `Material` of the surface it hit.
-    pub material: Arc<dyn Material + Send + Sync>,
+    pub material: Box<dyn Material>,
 }
 impl HitRecord {
     /// Returns a new `HitRecord`
-    pub fn new(t: f64, p: Vec3, material: Arc<dyn Material + Send + Sync>) -> Self {
+    pub fn new<T: Material + 'static>(t: f64, p: Vec3, material: T) -> Self {
         Self {
             t,
             p,
-            material,
+            material: Box::new(material),
             front_face: false,
             normal: Vec3::new(0.0, 0.0, 0.0),
         }
@@ -41,17 +42,19 @@ impl HitRecord {
 }
 
 /// A trait that defines any hittable surface or geometry
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     /// Calculates a ray intersection with a surface
     ///
     /// The intesection only counts if `t_min` < `t` < `t_max`
     /// where `t` is part of the ray formula 'P(t)=A+tb'
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+
+    fn bounding_box(&self, time: (f64, f64)) -> Option<Aabb>;
 }
 
 /// A list to store hittable surfaces
 pub struct HittableList {
-    surfaces: Vec<Box<dyn Hittable + Send + Sync>>,
+    pub surfaces: Vec<Arc<dyn Hittable>>,
 }
 
 impl HittableList {
@@ -67,8 +70,12 @@ impl HittableList {
         self.surfaces.clear();
     }
     /// Push a new `Hittable` into the list
-    pub fn push(&mut self, surface: Box<dyn Hittable + Send + Sync>) {
-        self.surfaces.push(surface);
+    pub fn push<T: Hittable + 'static>(&mut self, surface: T) {
+        self.surfaces.push(Arc::new(surface));
+    }
+
+    pub fn to_vec(self) -> Vec<Arc<dyn Hittable>> {
+        self.surfaces
     }
 }
 
@@ -87,5 +94,31 @@ impl Hittable for HittableList {
         }
 
         hit_record
+    }
+
+    fn bounding_box(&self, time: (f64, f64)) -> Option<Aabb> {
+        if self.surfaces.is_empty() {
+            return None;
+        }
+
+        let first_box = self.surfaces[0].bounding_box(time);
+
+        // If the first surface does have a bounding box then...
+        first_box.and_then(|first_box_aabb| {
+            // Loop through all the surfaces
+            self.surfaces
+                .iter()
+                .skip(1) // Skipping the first one
+                .map(|surface| surface.bounding_box(time)) // Get the bounding boxes
+                .try_fold(first_box_aabb, |accumulator_aabb, current_surface| {
+                    // Get a big AABB containing all the objects
+                    // if every object does have one
+                    current_surface.map(|current_surface_aabb| {
+                        Aabb::surrounding_box(&accumulator_aabb, &current_surface_aabb)
+                    })
+                })
+        })
+        // Returns that whole operation
+        // That big AABB or None if something happened to not have an AABB
     }
 }

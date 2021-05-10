@@ -1,24 +1,18 @@
-use std::sync::Arc;
-
+use super::aabb::Aabb;
 use super::hittable::{HitRecord, Hittable};
 use super::material::Material;
 use super::ray::Ray;
 use super::vec3::Vec3;
-
-pub struct MovingSphere {
+#[derive(Clone)]
+pub struct MovingSphere<T: Material + Clone + 'static> {
     center: (Vec3, Vec3),
     radius: f64,
-    material: Arc<dyn Material + Send + Sync>,
+    material: T,
     time: (f64, f64),
 }
 
-impl MovingSphere {
-    pub fn new(
-        center: (Vec3, Vec3),
-        radius: f64,
-        material: Arc<dyn Material + Send + Sync>,
-        time: (f64, f64),
-    ) -> Self {
+impl<T: Material + Clone + 'static> MovingSphere<T> {
+    pub fn new(center: (Vec3, Vec3), radius: f64, material: T, time: (f64, f64)) -> Self {
         Self {
             center,
             radius,
@@ -33,7 +27,7 @@ impl MovingSphere {
     }
 }
 
-impl Hittable for MovingSphere {
+impl<T: Material + Clone + 'static> Hittable for MovingSphere<T> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         // Since a sphere is a quadratic equation, we can solve it
         // using the quadratic formula.
@@ -80,5 +74,18 @@ impl Hittable for MovingSphere {
         record.set_face_normal(ray, outward_normal);
 
         Some(record)
+    }
+
+    fn bounding_box(&self, time: (f64, f64)) -> Option<Aabb> {
+        let box0 = Aabb::new(
+            self.center(time.0) - Vec3::new(self.radius, self.radius, self.radius),
+            self.center(time.0) + Vec3::new(self.radius, self.radius, self.radius),
+        );
+        let box1 = Aabb::new(
+            self.center(time.1) - Vec3::new(self.radius, self.radius, self.radius),
+            self.center(time.1) + Vec3::new(self.radius, self.radius, self.radius),
+        );
+
+        Some(Aabb::surrounding_box(&box0, &box1))
     }
 }

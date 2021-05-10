@@ -1,5 +1,21 @@
-use rand::Rng;
+use rand::{distributions::Standard, prelude::Distribution, Rng};
 use std::ops;
+
+#[derive(Clone, Copy)]
+pub enum Axis {
+    X,
+    Y,
+    Z,
+}
+impl Distribution<Axis> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Axis {
+        match rng.gen_range(0..=2) {
+            0 => Axis::X,
+            1 => Axis::Y,
+            _ => Axis::Z,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3(f64, f64, f64);
@@ -79,8 +95,7 @@ impl Vec3 {
 
     pub fn length_squared(&self) -> f64 {
         // (self.0 ^ 2) + (self.1 ^ 2) + (self.2 ^ 2)
-        self.0
-            .mul_add(self.0, self.1.mul_add(self.1, self.2 * self.2))
+        (self.0.powi(2)) + (self.1.powi(2)) + (self.2.powi(2))
     }
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
@@ -90,8 +105,7 @@ impl Vec3 {
     }
     /// Dot product of two `Vec3`
     pub fn dot(u: &Self, v: &Self) -> f64 {
-        // (u.0 * v.0) + (u.1 * v.1) + (u.2 * v.2)
-        u.0.mul_add(v.0, u.1.mul_add(v.1, u.2 * v.2))
+        (u.0 * v.0) + (u.1 * v.1) + (u.2 * v.2)
     }
     /// Cross product of two `Vec3`
     pub fn cross(u: &Self, v: &Self) -> Self {
@@ -104,6 +118,40 @@ impl Vec3 {
 }
 
 // Operator overloads
+
+// Indexing
+impl ops::Index<usize> for Vec3 {
+    type Output = f64;
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.0,
+            1 => &self.1,
+            2 => &self.2,
+            _ => panic!(),
+        }
+    }
+}
+impl ops::Index<u8> for Vec3 {
+    type Output = f64;
+    fn index(&self, index: u8) -> &Self::Output {
+        match index {
+            0 => &self.0,
+            1 => &self.1,
+            2 => &self.2,
+            _ => panic!(),
+        }
+    }
+}
+impl ops::Index<Axis> for Vec3 {
+    type Output = f64;
+    fn index(&self, index: Axis) -> &Self::Output {
+        match index {
+            Axis::X => &self.0,
+            Axis::Y => &self.1,
+            Axis::Z => &self.2,
+        }
+    }
+}
 
 // Comparison
 impl PartialEq for Vec3 {
