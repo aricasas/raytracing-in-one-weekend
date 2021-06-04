@@ -7,13 +7,11 @@
     clippy::perf,
     clippy::style
 )]
+
 use rand::Rng;
 use rayon::prelude::*;
 
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
-use std::fs::File;
-use std::io::BufWriter;
-use std::path::Path;
 
 mod color;
 use color::Color;
@@ -33,13 +31,15 @@ mod camera;
 use camera::Camera;
 mod material;
 use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
+mod texture;
+use texture::{checker::CheckerTexture, solid::SolidColor};
 
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u32 = 640;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: u32 = 10;
+    const SAMPLES_PER_PIXEL: u32 = 50;
     const MAX_DEPTH: u32 = 50;
 
     // Camera
@@ -79,16 +79,20 @@ fn main() {
     eprintln!("\n{}", get_elapsed_time_message(start_time.elapsed()));
 
     // Output image
-    let image_colors: Vec<u8> = rendered_colors
-        .par_iter()
-        .map(|c| c.to_writeable_ints(SAMPLES_PER_PIXEL))
-        .collect::<Vec<[u8; 3]>>()
-        .iter()
-        .flat_map(|array| array.iter())
-        .cloned()
-        .collect();
+    let mut image_colors = image::RgbImage::new(IMAGE_WIDTH, IMAGE_HEIGHT);
 
-    output_png("out.png", &image_colors, IMAGE_WIDTH, IMAGE_HEIGHT);
+    for y in 1..=IMAGE_HEIGHT {
+        for x in 0..IMAGE_WIDTH {
+            let pixel = &rendered_colors[((y - 1) * IMAGE_WIDTH + x) as usize];
+            image_colors.put_pixel(
+                x,
+                IMAGE_HEIGHT - y,
+                image::Rgb(pixel.to_writeable_ints(SAMPLES_PER_PIXEL)),
+            );
+        }
+    }
+
+    image_colors.save("out.png").unwrap();
 }
 
 fn render<T: Hittable>(
@@ -113,7 +117,7 @@ fn render<T: Hittable>(
         .for_each(|(i, pixel_color)| {
             let mut rng = rand::thread_rng();
 
-            let (x, y) = get_image_coordinates(i as u32, image_width, image_height);
+            let (x, y) = get_image_coordinates(i as u32, image_width);
 
             for _ in 0..samples_per_pixel {
                 let u = (f64::from(x) + rng.gen::<f64>()) / f64::from(image_width - 1);
@@ -131,7 +135,8 @@ fn generate_random_scene() -> BvhNode {
     let mut world = HittableList::new();
 
     // Ground
-    let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
+    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let ground_material = Lambertian::new(checker);
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -155,7 +160,9 @@ fn generate_random_scene() -> BvhNode {
                 match choose_mat {
                     // Lambertian 80% chance
                     x if x < 0.8 => {
-                        let sphere_material = Lambertian::new(Color::random() * Color::random());
+                        let sphere_material = Lambertian::new(SolidColor::from_color(
+                            Color::random() * Color::random(),
+                        ));
 
                         world.push(Sphere::new(
                             center,
@@ -200,7 +207,7 @@ fn generate_random_scene() -> BvhNode {
     let material1 = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Lambertian::new(Color::new(0.4, 0.2, 0.1));
+    let material2 = Lambertian::new(SolidColor::new(0.4, 0.2, 0.1));
     world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
     let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
@@ -209,24 +216,9 @@ fn generate_random_scene() -> BvhNode {
     BvhNode::new(world.to_vec(), (0.0, 1.0))
 }
 
-/// Writes the image data to a png file
-fn output_png(filename: &str, image_data: &[u8], image_width: u32, image_height: u32) {
-    // code taken from https://docs.rs/png/0.16.8/png/index.html#encoder
-    let path = Path::new(filename);
-    let file = File::create(path).unwrap();
-    let w = BufWriter::new(file);
-
-    let mut encoder = png::Encoder::new(w, image_width, image_height);
-    encoder.set_color(png::ColorType::RGB);
-    encoder.set_depth(png::BitDepth::Eight);
-    let mut writer = encoder.write_header().unwrap();
-
-    writer.write_image_data(image_data).unwrap();
-}
-
-const fn get_image_coordinates(i: u32, width: u32, height: u32) -> (u32, u32) {
+const fn get_image_coordinates(i: u32, width: u32) -> (u32, u32) {
     let x = i as u32 % width;
-    let y = height - (i / width) - 1;
+    let y = i / width;
 
     (x, y)
 }
@@ -267,26 +259,25 @@ mod tests {
     #[test]
     fn test_get_image_coordinates() {
         let width = 20;
-        let height = 10;
 
-        assert_eq!(get_image_coordinates(0, width, height), (0, 9));
-        assert_eq!(get_image_coordinates(24, width, height), (4, 8));
-        assert_eq!(get_image_coordinates(99, width, height), (19, 5));
-        assert_eq!(get_image_coordinates(100, width, height), (0, 4));
-        assert_eq!(get_image_coordinates(199, width, height), (19, 0));
+        assert_eq!(get_image_coordinates(0, width,), (0, 0));
+        assert_eq!(get_image_coordinates(24, width,), (4, 1));
+        assert_eq!(get_image_coordinates(99, width,), (19, 4));
+        assert_eq!(get_image_coordinates(100, width,), (0, 5));
+        assert_eq!(get_image_coordinates(199, width,), (19, 9));
 
         //     y
         //
-        //   9 ^  0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19
-        //   8 |  20    21    22    23    24    25    26    27    28    29    30    31    32    33    34    35    36    37    38    39
-        //   7 |  40    41    42    43    44    45    46    47    48    49    50    51    52    53    54    55    56    57    58    59
-        //   6 |  60    61    62    63    64    65    66    67    68    69    70    71    72    73    74    75    76    77    78    79
-        //   5 |  80    81    82    83    84    85    86    87    88    89    90    91    92    93    94    95    96    97    98    99
-        //   4 |  100   101   102   103   104   105   106   107   108   109   110   111   112   113   114   115   116   117   118   119
-        //   3 |  120   121   122   123   124   125   126   127   128   129   130   131   132   133   134   135   136   137   138   139
-        //   2 |  140   141   142   143   144   145   146   147   148   149   150   151   152   153   154   155   156   157   158   159
-        //   1 |  160   161   162   163   164   165   166   167   168   169   170   171   172   173   174   175   176   177   178   179
-        //   0 |  180   181   182   183   184   185   186   187   188   189   190   191   192   193   194   195   196   197   198   199
+        //   9 ^  180   181   182   183   184   185   186   187   188   189   190   191   192   193   194   195   196   197   198   199
+        //   8 |  160   161   162   163   164   165   166   167   168   169   170   171   172   173   174   175   176   177   178   179
+        //   7 |  140   141   142   143   144   145   146   147   148   149   150   151   152   153   154   155   156   157   158   159
+        //   6 |  120   121   122   123   124   125   126   127   128   129   130   131   132   133   134   135   136   137   138   139
+        //   5 |  100   101   102   103   104   105   106   107   108   109   110   111   112   113   114   115   116   117   118   119
+        //   4 |  80    81    82    83    84    85    86    87    88    89    90    91    92    93    94    95    96    97    98    99
+        //   3 |  60    61    62    63    64    65    66    67    68    69    70    71    72    73    74    75    76    77    78    79
+        //   2 |  40    41    42    43    44    45    46    47    48    49    50    51    52    53    54    55    56    57    58    59
+        //   1 |  20    21    22    23    24    25    26    27    28    29    30    31    32    33    34    35    36    37    38    39
+        //   0 |  0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19
         //      ------------------------------------------------------------------------------------------------------------------------> x
         //         0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19
     }

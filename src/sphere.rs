@@ -3,6 +3,7 @@ use super::hittable::{HitRecord, Hittable};
 use super::material::Material;
 use super::ray::Ray;
 use super::vec3::Vec3;
+use std::f64::consts::PI;
 
 #[derive(Clone)]
 pub struct Sphere<T: Material + Clone + 'static> {
@@ -19,7 +20,27 @@ impl<T: Material + Clone + 'static> Sphere<T> {
             material,
         }
     }
+
+    /// Return texture coordinates (u, v) from a point in a unit sphere
+    ///
+    /// # Arguments
+    /// * `p` - a given point on the sphere of radius one, centered at the origin.
+    ///
+    /// # Returns
+    /// (u: f64, v: f64)
+    /// * `u` - returned value \[0,1\] of angle around the Y axis from X=-1.
+    /// * `v` - returned value \[0,1\] of angle from Y=-1 to Y=+1.
+    fn get_sphere_uv(p: Vec3) -> (f64, f64) {
+        let theta = f64::acos(-p.y());
+        let phi = f64::atan2(-p.z(), p.x()) + PI;
+
+        let u = phi / (2.0 * PI);
+        let v = theta / PI;
+
+        (u, v)
+    }
 }
+
 impl<T: Material + Clone + 'static> Hittable for Sphere<T> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         // Since a sphere is a quadratic equation, we can solve it
@@ -65,6 +86,9 @@ impl<T: Material + Clone + 'static> Hittable for Sphere<T> {
 
         let outward_normal = (record.p - self.center) / self.radius;
         record.set_face_normal(ray, outward_normal);
+
+        let (u, v) = Self::get_sphere_uv(outward_normal);
+        record.set_texture_coordinates(u, v);
 
         Some(record)
     }

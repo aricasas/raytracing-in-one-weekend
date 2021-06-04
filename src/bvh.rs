@@ -20,9 +20,9 @@ impl BvhNode {
         let rand_axis: Axis = rand::thread_rng().gen();
         let comparison_fn: fn(&Arc<dyn Hittable>, &Arc<dyn Hittable>) -> Ordering = match rand_axis
         {
-            Axis::X => |a, b| box_compare(&a, &b, Axis::X),
-            Axis::Y => |a, b| box_compare(&a, &b, Axis::Y),
-            Axis::Z => |a, b| box_compare(&a, &b, Axis::Z),
+            Axis::X => |a, b| box_compare(a, b, Axis::X),
+            Axis::Y => |a, b| box_compare(a, b, Axis::Y),
+            Axis::Z => |a, b| box_compare(a, b, Axis::Z),
         };
 
         let (left, right) = match objects.len() {

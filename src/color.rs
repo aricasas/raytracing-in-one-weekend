@@ -3,12 +3,12 @@ use std::ops;
 
 use super::vec3::Vec3;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Color(Vec3);
 
 impl Color {
-    pub const fn new(x: f64, y: f64, z: f64) -> Self {
-        Self(Vec3::new(x, y, z))
+    pub const fn new(r: f64, g: f64, b: f64) -> Self {
+        Self(Vec3::new(r, g, b))
     }
 
     pub const fn r(&self) -> f64 {

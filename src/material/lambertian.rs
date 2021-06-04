@@ -1,22 +1,22 @@
-use crate::color::Color;
 use crate::hittable::HitRecord;
 use crate::material::{Material, ScatterRecord};
 use crate::ray::Ray;
+use crate::texture::Texture;
 use crate::vec3::Vec3;
 
 #[derive(Clone)]
-pub struct Lambertian {
-    pub albedo: Color,
+pub struct Lambertian<T: Texture + Clone> {
+    pub albedo: T,
 }
 
 /// A material with lambertian reflectance (matte)
-impl Lambertian {
-    pub const fn new(albedo: Color) -> Self {
+impl<T: Texture + Clone> Lambertian<T> {
+    pub fn new(albedo: T) -> Self {
         Self { albedo }
     }
 }
 
-impl Material for Lambertian {
+impl<T: Texture + Clone> Material for Lambertian<T> {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterRecord> {
         let mut scatter_direction = record.normal + Vec3::random_unit_vector();
 
@@ -26,7 +26,7 @@ impl Material for Lambertian {
 
         Some(ScatterRecord {
             scattered_ray: Ray::new(record.p, scatter_direction, ray.time),
-            attenuation: self.albedo,
+            attenuation: self.albedo.value(record.u, record.v, &record.p),
         })
     }
 }

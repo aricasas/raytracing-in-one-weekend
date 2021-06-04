@@ -12,6 +12,8 @@ pub struct HitRecord {
     pub t: f64,
     /// The point in space where the hit occurs
     pub p: Vec3,
+    pub u: f64,
+    pub v: f64,
     /// A normal vector perpendicular to the hit surface.
     pub normal: Vec3,
     /// If the ray hit the surface from outside then it's `true`. If it hit it from the inside, then it's `false`.
@@ -25,6 +27,8 @@ impl HitRecord {
         Self {
             t,
             p,
+            u: 0.0,
+            v: 0.0,
             material: Box::new(material),
             front_face: false,
             normal: Vec3::new(0.0, 0.0, 0.0),
@@ -38,6 +42,10 @@ impl HitRecord {
         } else {
             -outward_normal
         };
+    }
+    pub fn set_texture_coordinates(&mut self, u: f64, v: f64) {
+        self.u = u;
+        self.v = v;
     }
 }
 
