@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::ops;
 
-use super::vec3::Vec3;
+use crate::vec3::Vec3;
 
 #[derive(Clone)]
 pub struct Color(Vec3);
@@ -38,9 +38,9 @@ impl Color {
         let g = (self.g() / samples_per_pixel).sqrt();
         let b = (self.b() / samples_per_pixel).sqrt();
 
-        let r = (255.0 * r.clamp(0.0, 0.999)).round() as u8;
-        let g = (255.0 * g.clamp(0.0, 0.999)).round() as u8;
-        let b = (255.0 * b.clamp(0.0, 0.999)).round() as u8;
+        let r = (255.0 * r.clamp(0.0, 1.0)).round() as u8;
+        let g = (255.0 * g.clamp(0.0, 1.0)).round() as u8;
+        let b = (255.0 * b.clamp(0.0, 1.0)).round() as u8;
 
         [r, g, b]
     }

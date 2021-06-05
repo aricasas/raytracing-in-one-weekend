@@ -2,7 +2,7 @@ use rand::Rng;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use crate::aabb::Aabb;
+use super::aabb::Aabb;
 use crate::hittable::{HitRecord, Hittable};
 use crate::ray::Ray;
 use crate::vec3::Axis;
@@ -115,8 +115,8 @@ impl Hittable for BvhNode {
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::material::dielectric::Dielectric;
-    use crate::sphere::Sphere;
+    use crate::materials::dielectric::Dielectric;
+    use crate::surfaces::sphere::Sphere;
     use crate::vec3::Vec3;
 
     use super::*;

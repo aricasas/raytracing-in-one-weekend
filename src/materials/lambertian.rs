@@ -1,7 +1,7 @@
 use crate::hittable::HitRecord;
-use crate::material::{Material, ScatterRecord};
+use crate::materials::{Material, ScatterRecord};
 use crate::ray::Ray;
-use crate::texture::Texture;
+use crate::textures::Texture;
 use crate::vec3::Vec3;
 
 #[derive(Clone)]

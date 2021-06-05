@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use super::aabb::Aabb;
-use super::material::Material;
-use super::ray::Ray;
-use super::vec3::Vec3;
+use crate::materials::Material;
+use crate::ray::Ray;
+use crate::surfaces::aabb::Aabb;
+use crate::vec3::Vec3;
 
 /// A struct to store relevant data of a ray intersecting with a surface
 pub struct HitRecord {

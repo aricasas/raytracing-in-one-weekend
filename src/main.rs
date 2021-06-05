@@ -9,37 +9,21 @@
 )]
 
 use rand::Rng;
-use rayon::prelude::*;
 
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
-
-mod color;
-use color::Color;
-mod hittable;
-use hittable::{Hittable, HittableList};
-mod ray;
-mod sphere;
-use sphere::Sphere;
-mod moving_sphere;
-use moving_sphere::MovingSphere;
-mod aabb;
-mod bvh;
-use bvh::BvhNode;
-mod vec3;
-use vec3::Vec3;
-mod camera;
-use camera::Camera;
-mod material;
-use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
-mod texture;
-use texture::{checker::CheckerTexture, solid::SolidColor};
+use raytracing::hittable::HittableList;
+use raytracing::materials::{Dielectric, Lambertian, Metal};
+use raytracing::surfaces::{BvhNode, MovingSphere, Sphere};
+use raytracing::textures::{CheckerTexture, SolidColor};
+use raytracing::Camera;
+use raytracing::Color;
+use raytracing::Vec3;
 
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u32 = 640;
+    const IMAGE_WIDTH: u32 = 1920;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: u32 = 50;
+    const SAMPLES_PER_PIXEL: u32 = 30;
     const MAX_DEPTH: u32 = 50;
 
     // Camera
@@ -67,7 +51,7 @@ fn main() {
     // Render
     let start_time = std::time::Instant::now();
 
-    let rendered_colors = render(
+    let rendered_colors = raytracing::render(
         &camera,
         &world,
         IMAGE_WIDTH,
@@ -76,59 +60,19 @@ fn main() {
         MAX_DEPTH,
     );
 
-    eprintln!("\n{}", get_elapsed_time_message(start_time.elapsed()));
-
-    // Output image
-    let mut image_colors = image::RgbImage::new(IMAGE_WIDTH, IMAGE_HEIGHT);
-
-    for y in 1..=IMAGE_HEIGHT {
-        for x in 0..IMAGE_WIDTH {
-            let pixel = &rendered_colors[((y - 1) * IMAGE_WIDTH + x) as usize];
-            image_colors.put_pixel(
-                x,
-                IMAGE_HEIGHT - y,
-                image::Rgb(pixel.to_writeable_ints(SAMPLES_PER_PIXEL)),
-            );
-        }
-    }
-
-    image_colors.save("out.png").unwrap();
-}
-
-fn render<T: Hittable>(
-    camera: &Camera,
-    world: &T,
-    image_width: u32,
-    image_height: u32,
-    samples_per_pixel: u32,
-    max_depth: u32,
-) -> Vec<Color> {
-    let mut image_colors = vec![Color::new(0.0, 0.0, 0.0); (image_width * image_height) as usize];
-
-    let bar = ProgressBar::new(u64::from(image_width * image_height));
-    bar.set_style(
-        ProgressStyle::default_bar().template("[{elapsed_precise}] Rendering {percent}% done."),
+    eprintln!(
+        "\nDone. Rendering took {}",
+        get_elapsed_time_message(start_time.elapsed())
     );
 
-    image_colors
-        .par_iter_mut()
-        .enumerate()
-        .progress_with(bar)
-        .for_each(|(i, pixel_color)| {
-            let mut rng = rand::thread_rng();
+    // Output image
+    let mut rendered_image = image::RgbImage::from_fn(IMAGE_WIDTH, IMAGE_HEIGHT, |x, y| {
+        rendered_colors[(y * IMAGE_WIDTH + x) as usize]
+    });
 
-            let (x, y) = get_image_coordinates(i as u32, image_width);
+    image::imageops::flip_vertical_in_place(&mut rendered_image);
 
-            for _ in 0..samples_per_pixel {
-                let u = (f64::from(x) + rng.gen::<f64>()) / f64::from(image_width - 1);
-                let v = (f64::from(y) + rng.gen::<f64>()) / f64::from(image_height - 1);
-
-                let ray = camera.get_ray(u, v);
-                *pixel_color += ray.calculate_color(world, max_depth);
-            }
-        });
-
-    image_colors
+    rendered_image.save("out.png").unwrap();
 }
 
 fn generate_random_scene() -> BvhNode {
@@ -216,13 +160,7 @@ fn generate_random_scene() -> BvhNode {
     BvhNode::new(world.to_vec(), (0.0, 1.0))
 }
 
-const fn get_image_coordinates(i: u32, width: u32) -> (u32, u32) {
-    let x = i as u32 % width;
-    let y = i / width;
-
-    (x, y)
-}
-fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
+pub fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
     let mut seconds_passed = start_time.as_secs();
 
     let hours_passed = seconds_passed / 3600;
@@ -243,7 +181,7 @@ fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
     };
 
     format!(
-        "Done. Rendering took {}{}{}.{:0>3} seconds.",
+        "{}{}{}.{:0>3} seconds.",
         hours_passed,
         minutes_passed,
         seconds_passed,
@@ -257,83 +195,58 @@ mod tests {
     use std::time::Duration;
 
     #[test]
-    fn test_get_image_coordinates() {
-        let width = 20;
-
-        assert_eq!(get_image_coordinates(0, width,), (0, 0));
-        assert_eq!(get_image_coordinates(24, width,), (4, 1));
-        assert_eq!(get_image_coordinates(99, width,), (19, 4));
-        assert_eq!(get_image_coordinates(100, width,), (0, 5));
-        assert_eq!(get_image_coordinates(199, width,), (19, 9));
-
-        //     y
-        //
-        //   9 ^  180   181   182   183   184   185   186   187   188   189   190   191   192   193   194   195   196   197   198   199
-        //   8 |  160   161   162   163   164   165   166   167   168   169   170   171   172   173   174   175   176   177   178   179
-        //   7 |  140   141   142   143   144   145   146   147   148   149   150   151   152   153   154   155   156   157   158   159
-        //   6 |  120   121   122   123   124   125   126   127   128   129   130   131   132   133   134   135   136   137   138   139
-        //   5 |  100   101   102   103   104   105   106   107   108   109   110   111   112   113   114   115   116   117   118   119
-        //   4 |  80    81    82    83    84    85    86    87    88    89    90    91    92    93    94    95    96    97    98    99
-        //   3 |  60    61    62    63    64    65    66    67    68    69    70    71    72    73    74    75    76    77    78    79
-        //   2 |  40    41    42    43    44    45    46    47    48    49    50    51    52    53    54    55    56    57    58    59
-        //   1 |  20    21    22    23    24    25    26    27    28    29    30    31    32    33    34    35    36    37    38    39
-        //   0 |  0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19
-        //      ------------------------------------------------------------------------------------------------------------------------> x
-        //         0     1     2     3     4     5     6     7     8     9     10    11    12    13    14    15    16    17    18    19
-    }
-    #[test]
     fn test_get_elapsed_time_message() {
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(0)),
-            String::from("Done. Rendering took 0.000 seconds.")
+            String::from("0.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs_f32(0.001)),
-            String::from("Done. Rendering took 0.001 seconds.")
+            String::from("0.001 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs_f32(0.5)),
-            String::from("Done. Rendering took 0.500 seconds.")
+            String::from("0.500 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs_f32(0.999)),
-            String::from("Done. Rendering took 0.999 seconds.")
+            String::from("0.999 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(15)),
-            String::from("Done. Rendering took 15.000 seconds.")
+            String::from("15.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(59)),
-            String::from("Done. Rendering took 59.000 seconds.")
+            String::from("59.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(60)),
-            String::from("Done. Rendering took 1 minutes, and 0.000 seconds.")
+            String::from("1 minutes, and 0.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(61)),
-            String::from("Done. Rendering took 1 minutes, and 1.000 seconds.")
+            String::from("1 minutes, and 1.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(1000)),
-            String::from("Done. Rendering took 16 minutes, and 40.000 seconds.")
+            String::from("16 minutes, and 40.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(3599)),
-            String::from("Done. Rendering took 59 minutes, and 59.000 seconds.")
+            String::from("59 minutes, and 59.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(3600)),
-            String::from("Done. Rendering took 1 hours, 0.000 seconds.")
+            String::from("1 hours, 0.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(3601)),
-            String::from("Done. Rendering took 1 hours, 1.000 seconds.")
+            String::from("1 hours, 1.000 seconds.")
         );
         assert_eq!(
             get_elapsed_time_message(Duration::from_secs(50_000)),
-            String::from("Done. Rendering took 13 hours, 53 minutes, and 20.000 seconds.")
+            String::from("13 hours, 53 minutes, and 20.000 seconds.")
         );
     }
 }

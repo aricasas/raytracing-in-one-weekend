@@ -2,7 +2,7 @@ use rand::Rng;
 
 use crate::color::Color;
 use crate::hittable::HitRecord;
-use crate::material::{Material, ScatterRecord};
+use crate::materials::{Material, ScatterRecord};
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
@@ -17,9 +17,12 @@ impl Dielectric {
     }
     fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
         // Use Schlick's approximation for reflectance.
-        let r0 = ((1.0 - refraction_index) / (1.0 + refraction_index)).powi(2);
+        // let r0 = ((1.0 - refraction_index) / (1.0 + refraction_index)).powi(2);
+        let r0 = ((1.0 - refraction_index) / (1.0 + refraction_index))
+            * ((1.0 - refraction_index) / (1.0 + refraction_index));
 
-        r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+        // r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+        (1.0 - r0).mul_add((1.0 - cosine).powi(5), r0)
     }
 }
 

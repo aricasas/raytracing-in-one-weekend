@@ -94,8 +94,9 @@ impl Vec3 {
     }
 
     pub fn length_squared(&self) -> f64 {
-        // (self.0 ^ 2) + (self.1 ^ 2) + (self.2 ^ 2)
-        (self.x().powi(2)) + (self.y().powi(2)) + (self.z().powi(2))
+        // (self.x() ^ 2) + (self.y() ^ 2) + (self.z() ^ 2)
+        self.z()
+            .mul_add(self.z(), self.x().mul_add(self.x(), self.y() * self.y()))
     }
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
@@ -105,7 +106,8 @@ impl Vec3 {
     }
     /// Dot product of two `Vec3`
     pub fn dot(u: &Self, v: &Self) -> f64 {
-        (u.x() * v.x()) + (u.y() * v.y()) + (u.z() * v.z())
+        // (u.x() * v.x()) + (u.y() * v.y()) + (u.z() * v.z())
+        u.z().mul_add(v.z(), u.x().mul_add(v.x(), u.y() * v.y()))
     }
     /// Cross product of two `Vec3`
     pub fn cross(u: &Self, v: &Self) -> Self {
@@ -332,6 +334,7 @@ impl ops::Div<f64> for &Vec3 {
 // Tests
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::float_cmp)]
     use super::*;
 
     #[test]

@@ -1,6 +1,6 @@
-use super::color::Color;
-use super::hittable::Hittable;
-use super::vec3::Vec3;
+use crate::color::Color;
+use crate::hittable::Hittable;
+use crate::vec3::Vec3;
 
 #[derive(Debug)]
 pub struct Ray {

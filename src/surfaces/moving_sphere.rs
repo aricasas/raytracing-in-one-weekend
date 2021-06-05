@@ -1,52 +1,38 @@
 use super::aabb::Aabb;
-use super::hittable::{HitRecord, Hittable};
-use super::material::Material;
-use super::ray::Ray;
-use super::vec3::Vec3;
-use std::f64::consts::PI;
-
+use crate::hittable::{HitRecord, Hittable};
+use crate::materials::Material;
+use crate::ray::Ray;
+use crate::vec3::Vec3;
 #[derive(Clone)]
-pub struct Sphere<T: Material + Clone + 'static> {
-    center: Vec3,
+pub struct MovingSphere<T: Material + Clone + 'static> {
+    center: (Vec3, Vec3),
     radius: f64,
-    pub material: T,
+    material: T,
+    time: (f64, f64),
 }
 
-impl<T: Material + Clone + 'static> Sphere<T> {
-    pub fn new(center: Vec3, radius: f64, material: T) -> Self {
+impl<T: Material + Clone + 'static> MovingSphere<T> {
+    pub fn new(center: (Vec3, Vec3), radius: f64, material: T, time: (f64, f64)) -> Self {
         Self {
             center,
             radius,
             material,
+            time,
         }
     }
 
-    /// Return texture coordinates (u, v) from a point in a unit sphere
-    ///
-    /// # Arguments
-    /// * `p` - a given point on the sphere of radius one, centered at the origin.
-    ///
-    /// # Returns
-    /// (u: f64, v: f64)
-    /// * `u` - returned value \[0,1\] of angle around the Y axis from X=-1.
-    /// * `v` - returned value \[0,1\] of angle from Y=-1 to Y=+1.
-    fn get_sphere_uv(p: Vec3) -> (f64, f64) {
-        let theta = f64::acos(-p.y());
-        let phi = f64::atan2(-p.z(), p.x()) + PI;
-
-        let u = phi / (2.0 * PI);
-        let v = theta / PI;
-
-        (u, v)
+    pub fn center(&self, time: f64) -> Vec3 {
+        self.center.0
+            + (self.center.1 - self.center.0) * ((time - self.time.0) / (self.time.1 - self.time.0))
     }
 }
 
-impl<T: Material + Clone + 'static> Hittable for Sphere<T> {
+impl<T: Material + Clone + 'static> Hittable for MovingSphere<T> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         // Since a sphere is a quadratic equation, we can solve it
         // using the quadratic formula.
         // For this ray intersection it's actually a version that's a bit simplified
-        let oc = ray.origin - self.center;
+        let oc = ray.origin - self.center(ray.time);
         let a = ray.direction.length_squared();
         let half_b = Vec3::dot(&oc, &ray.direction);
         let c = oc.length_squared() - self.radius * self.radius;
@@ -84,19 +70,22 @@ impl<T: Material + Clone + 'static> Hittable for Sphere<T> {
 
         let mut record = HitRecord::new(root, ray.at(root), self.material.clone());
 
-        let outward_normal = (record.p - self.center) / self.radius;
+        let outward_normal = (record.p - self.center(ray.time)) / self.radius;
         record.set_face_normal(ray, outward_normal);
-
-        let (u, v) = Self::get_sphere_uv(outward_normal);
-        record.set_texture_coordinates(u, v);
 
         Some(record)
     }
 
-    fn bounding_box(&self, _time: (f64, f64)) -> Option<Aabb> {
-        Some(Aabb::new(
-            self.center - Vec3::new(self.radius, self.radius, self.radius),
-            self.center + Vec3::new(self.radius, self.radius, self.radius),
-        ))
+    fn bounding_box(&self, time: (f64, f64)) -> Option<Aabb> {
+        let box0 = Aabb::new(
+            self.center(time.0) - Vec3::new(self.radius, self.radius, self.radius),
+            self.center(time.0) + Vec3::new(self.radius, self.radius, self.radius),
+        );
+        let box1 = Aabb::new(
+            self.center(time.1) - Vec3::new(self.radius, self.radius, self.radius),
+            self.center(time.1) + Vec3::new(self.radius, self.radius, self.radius),
+        );
+
+        Some(Aabb::surrounding_box(&box0, &box1))
     }
 }
