@@ -1,8 +1,10 @@
-use crate::color::Color;
-use crate::vec3::Vec3;
+use crate::Color;
+use crate::Vec3;
 
-pub mod checker;
-pub mod solid;
+mod checker;
+mod image;
+mod solid;
+pub use self::image::Image;
 pub use checker::CheckerTexture;
 pub use solid::SolidColor;
 

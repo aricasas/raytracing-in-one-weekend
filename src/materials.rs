@@ -1,6 +1,6 @@
-use super::color::Color;
 use super::hittable::HitRecord;
-use super::ray::Ray;
+use super::Color;
+use super::Ray;
 
 pub mod dielectric;
 pub mod lambertian;

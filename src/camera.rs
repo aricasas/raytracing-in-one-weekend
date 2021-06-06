@@ -1,7 +1,7 @@
 use rand::Rng;
 
-use crate::ray::Ray;
-use crate::vec3::Vec3;
+use crate::Ray;
+use crate::Vec3;
 
 pub struct Camera {
     origin: Vec3,
@@ -55,6 +55,8 @@ impl Camera {
     }
 
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
+        #![allow(clippy::float_cmp)]
+
         let rd = Vec3::random_in_unit_disk() * self.lens_radius;
         let offset = self.u * rd.x() + self.v * rd.y();
 

@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use crate::materials::Material;
-use crate::ray::Ray;
-use crate::surfaces::aabb::Aabb;
-use crate::vec3::Vec3;
+use crate::surfaces::Aabb;
+use crate::Ray;
+use crate::Vec3;
 
 /// A struct to store relevant data of a ray intersecting with a surface
 pub struct HitRecord {
@@ -82,7 +82,7 @@ impl HittableList {
         self.surfaces.push(Arc::new(surface));
     }
 
-    pub fn to_vec(self) -> Vec<Arc<dyn Hittable>> {
+    pub fn into_vec(self) -> Vec<Arc<dyn Hittable>> {
         self.surfaces
     }
 }
@@ -128,5 +128,11 @@ impl Hittable for HittableList {
         })
         // Returns that whole operation
         // That big AABB or None if something happened to not have an AABB
+    }
+}
+
+impl Default for HittableList {
+    fn default() -> Self {
+        Self::new()
     }
 }

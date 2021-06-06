@@ -1,5 +1,5 @@
-use crate::ray::Ray;
-use crate::vec3::Vec3;
+use crate::Ray;
+use crate::Vec3;
 
 /// Axis-aligned bounding box
 #[derive(Clone, Debug)]

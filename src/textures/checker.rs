@@ -1,5 +1,5 @@
-use super::{solid::SolidColor, Texture};
-use crate::{color::Color, vec3::Vec3};
+use super::{SolidColor, Texture};
+use crate::{Color, Vec3};
 
 #[derive(Clone)]
 pub struct CheckerTexture<T: Texture, G: Texture> {

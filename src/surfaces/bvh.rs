@@ -2,10 +2,10 @@ use rand::Rng;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use super::aabb::Aabb;
+use super::Aabb;
 use crate::hittable::{HitRecord, Hittable};
-use crate::ray::Ray;
 use crate::vec3::Axis;
+use crate::Ray;
 
 pub struct BvhNode {
     left: Arc<dyn Hittable>,
@@ -14,7 +14,25 @@ pub struct BvhNode {
 }
 
 impl BvhNode {
-    pub fn new(src_objects: Vec<Arc<dyn Hittable>>, time: (f64, f64)) -> Self {
+    pub fn new<T: Hittable + 'static, G: Hittable + 'static>(
+        left: T,
+        right: G,
+        time: (f64, f64),
+    ) -> Self {
+        let box_left = left
+            .bounding_box(time)
+            .expect("No bounding box in bvh_node constructor.");
+        let box_right = right
+            .bounding_box(time)
+            .expect("No bounding box in bvh_node constructor.");
+
+        Self {
+            left: Arc::new(left),
+            right: Arc::new(right),
+            aabb: Aabb::surrounding_box(&box_left, &box_right),
+        }
+    }
+    pub fn from_vec(src_objects: Vec<Arc<dyn Hittable>>, time: (f64, f64)) -> Self {
         let mut objects = src_objects;
 
         let rand_axis: Axis = rand::thread_rng().gen();
@@ -45,22 +63,23 @@ impl BvhNode {
                 let (list_a, list_b) = objects.split_at_mut(mid);
 
                 (
-                    Arc::new(Self::new(list_a.to_vec(), time)) as Arc<dyn Hittable>,
-                    Arc::new(Self::new(list_b.to_vec(), time)) as Arc<dyn Hittable>,
+                    Arc::new(Self::from_vec(list_a.to_vec(), time)) as Arc<dyn Hittable>,
+                    Arc::new(Self::from_vec(list_b.to_vec(), time)) as Arc<dyn Hittable>,
                 )
             }
         };
 
-        let possible_box_left = left.bounding_box(time);
-        let possible_box_right = right.bounding_box(time);
+        let box_left = left
+            .bounding_box(time)
+            .expect("No bounding box in bvh_node constructor.");
+        let box_right = right
+            .bounding_box(time)
+            .expect("No bounding box in bvh_node constructor.");
 
-        match (possible_box_left, possible_box_right) {
-            (Some(box_left), Some(box_right)) => Self {
-                left,
-                right,
-                aabb: Aabb::surrounding_box(&box_left, &box_right),
-            },
-            _ => panic!("No bounding box in bvh_node constructor."),
+        Self {
+            left,
+            right,
+            aabb: Aabb::surrounding_box(&box_left, &box_right),
         }
     }
 }
@@ -129,7 +148,7 @@ mod tests {
         let sphere1 = Sphere::new(Vec3::new(0.0, 0.0, 0.0), 1.0, material1);
         scene.push(Arc::new(sphere1));
 
-        let bvh = BvhNode::new(scene, (0.0, 1.0));
+        let bvh = BvhNode::from_vec(scene, (0.0, 1.0));
 
         assert_eq!(
             bvh.aabb,
@@ -152,7 +171,7 @@ mod tests {
         let sphere2 = Sphere::new(Vec3::new(5.0, 0.0, 0.0), 1.0, material2);
         scene.push(Arc::new(sphere2));
 
-        let bvh = BvhNode::new(scene, (0.0, 1.0));
+        let bvh = BvhNode::from_vec(scene, (0.0, 1.0));
 
         assert_eq!(
             bvh.aabb,

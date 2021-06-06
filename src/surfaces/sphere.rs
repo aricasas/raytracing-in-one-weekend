@@ -1,8 +1,8 @@
-use super::aabb::Aabb;
+use super::Aabb;
 use crate::hittable::{HitRecord, Hittable};
 use crate::materials::Material;
-use crate::ray::Ray;
-use crate::vec3::Vec3;
+use crate::Ray;
+use crate::Vec3;
 use std::f64::consts::PI;
 
 #[derive(Clone)]

@@ -1,7 +1,7 @@
 use rand::Rng;
 use std::ops;
 
-use crate::vec3::Vec3;
+use crate::Vec3;
 
 #[derive(Clone)]
 pub struct Color(Vec3);

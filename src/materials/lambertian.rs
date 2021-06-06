@@ -1,8 +1,8 @@
 use crate::hittable::HitRecord;
 use crate::materials::{Material, ScatterRecord};
-use crate::ray::Ray;
 use crate::textures::Texture;
-use crate::vec3::Vec3;
+use crate::Ray;
+use crate::Vec3;
 
 #[derive(Clone)]
 pub struct Lambertian<T: Texture + Clone> {

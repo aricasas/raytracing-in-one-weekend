@@ -7,47 +7,46 @@
     clippy::perf,
     clippy::style
 )]
+#![allow(clippy::must_use_candidate)]
+
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rand::Rng;
 use rayon::prelude::*;
 
 pub use camera::Camera;
 pub use color::Color;
-pub use hittable::Hittable;
+use hittable::Hittable;
 pub use ray::Ray;
+use scene::Scene;
 pub use vec3::Vec3;
 
-pub mod camera;
-pub mod color;
+mod camera;
+mod color;
 pub mod hittable;
 pub mod materials;
-pub mod ray;
+mod ray;
+pub mod scene;
 pub mod surfaces;
 pub mod textures;
 pub mod vec3;
 
-/// Returns either 1.0 or -1.0 oscilating each time you pass the range
-pub fn oscillate(x: f64, range: f64) -> f64 {
-    let double_range = range * 2.0;
-    let value = (x % double_range).abs();
+// /// Returns either 1.0 or -1.0 oscilating each time you pass the range
+// pub fn oscillate(x: f64, range: f64) -> f64 {
+//     let double_range = range * 2.0;
+//     let value = (x % double_range).abs();
 
-    let mut result = if value < range { -1.0 } else { 1.0 };
+//     let mut result = if value < range { -1.0 } else { 1.0 };
 
-    if x > 0.0 {
-        result = -result;
-    }
+//     if x > 0.0 {
+//         result = -result;
+//     }
 
-    result
-}
+//     result
+// }
 
-pub fn render<T: Hittable>(
-    camera: &Camera,
-    world: &T,
-    image_width: u32,
-    image_height: u32,
-    samples_per_pixel: u32,
-    max_depth: u32,
-) -> Vec<image::Rgb<u8>> {
+pub fn render<T: Hittable>(scene: &Scene<T>) -> Vec<image::Rgb<u8>> {
+    let (image_width, image_height) = scene.image_size();
+
     let bar = ProgressBar::new(u64::from(image_width * image_height));
     bar.set_style(
         ProgressStyle::default_bar().template("[{elapsed_precise}] Rendering {percent}% done."),
@@ -62,17 +61,17 @@ pub fn render<T: Hittable>(
 
             let (x, y) = get_image_coordinates(i as u32, image_width);
 
-            for _ in 0..samples_per_pixel {
+            for _ in 0..scene.samples_per_pixel() {
                 let u = (f64::from(x) + rng.gen::<f64>()) / f64::from(image_width - 1);
                 let v = (f64::from(y) + rng.gen::<f64>()) / f64::from(image_height - 1);
 
-                let ray = camera.get_ray(u, v);
-                pixel_color += ray.calculate_color(world, max_depth);
+                let ray = scene.camera().get_ray(u, v);
+                pixel_color += ray.calculate_color(scene.world(), scene.max_depth());
             }
 
             pixel_color
         })
-        .map(|pixel| image::Rgb(pixel.to_writeable_ints(samples_per_pixel)))
+        .map(|pixel| image::Rgb(pixel.to_writeable_ints(scene.samples_per_pixel())))
         .collect()
 }
 

@@ -1,7 +1,7 @@
-pub mod aabb;
-pub mod bvh;
-pub mod moving_sphere;
-pub mod sphere;
+mod aabb;
+mod bvh;
+mod moving_sphere;
+mod sphere;
 pub use aabb::Aabb;
 pub use bvh::BvhNode;
 pub use moving_sphere::MovingSphere;

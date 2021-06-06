@@ -7,11 +7,13 @@
     clippy::perf,
     clippy::style
 )]
+#![allow(clippy::must_use_candidate)]
 
 use rand::Rng;
 
 use raytracing::hittable::HittableList;
 use raytracing::materials::{Dielectric, Lambertian, Metal};
+use raytracing::scene::SceneBuilder;
 use raytracing::surfaces::{BvhNode, MovingSphere, Sphere};
 use raytracing::textures::{CheckerTexture, SolidColor};
 use raytracing::Camera;
@@ -19,13 +21,36 @@ use raytracing::Color;
 use raytracing::Vec3;
 
 fn main() {
-    // Image
-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    // Scene
     const IMAGE_WIDTH: u32 = 1920;
-    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
-    const SAMPLES_PER_PIXEL: u32 = 30;
-    const MAX_DEPTH: u32 = 50;
+    let scene = scene3()
+        .image_size(IMAGE_WIDTH)
+        .samples_per_pixel(500)
+        .max_depth(50)
+        .build();
 
+    // Render
+    let start_time = std::time::Instant::now();
+
+    let rendered_colors = raytracing::render(&scene);
+
+    eprintln!(
+        "\nDone. Rendering took {}",
+        get_elapsed_time_message(start_time.elapsed())
+    );
+
+    // Output image
+    let mut rendered_image =
+        image::RgbImage::from_fn(scene.image_size().0, scene.image_size().1, |x, y| {
+            rendered_colors[(y * IMAGE_WIDTH + x) as usize]
+        });
+
+    image::imageops::flip_vertical_in_place(&mut rendered_image);
+
+    rendered_image.save("out.png").unwrap();
+}
+
+fn scene1() -> SceneBuilder<BvhNode> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
@@ -33,6 +58,7 @@ fn main() {
     const FOV: f64 = 20.0;
     const APERTURE: f64 = 0.1;
     const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
 
     let camera = Camera::new(
         LOOK_FROM,
@@ -45,42 +71,96 @@ fn main() {
         (0.0, 1.0),
     );
 
-    // World
-    let world = generate_random_scene();
-
-    // Render
-    let start_time = std::time::Instant::now();
-
-    let rendered_colors = raytracing::render(
-        &camera,
-        &world,
-        IMAGE_WIDTH,
-        IMAGE_HEIGHT,
-        SAMPLES_PER_PIXEL,
-        MAX_DEPTH,
-    );
-
-    eprintln!(
-        "\nDone. Rendering took {}",
-        get_elapsed_time_message(start_time.elapsed())
-    );
-
-    // Output image
-    let mut rendered_image = image::RgbImage::from_fn(IMAGE_WIDTH, IMAGE_HEIGHT, |x, y| {
-        rendered_colors[(y * IMAGE_WIDTH + x) as usize]
-    });
-
-    image::imageops::flip_vertical_in_place(&mut rendered_image);
-
-    rendered_image.save("out.png").unwrap();
-}
-
-fn generate_random_scene() -> BvhNode {
     let mut world = HittableList::new();
 
     // Ground
-    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
-    let ground_material = Lambertian::new(checker);
+    let ground_material = Lambertian::new(SolidColor::new(0.5, 0.5, 0.5));
+    world.push(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    ));
+
+    // Random spheres
+    let mut rng = rand::thread_rng();
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat: f64 = rng.gen();
+            let center = Vec3::new(
+                0.9_f64 * rng.gen::<f64>() + f64::from(a),
+                0.2,
+                0.9 * rng.gen::<f64>() + f64::from(b),
+            );
+
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                match choose_mat {
+                    // Lambertian 80% chance
+                    x if x < 0.8 => {
+                        let sphere_material = Lambertian::new(SolidColor::from_color(
+                            Color::random() * Color::random(),
+                        ));
+
+                        world.push(Sphere::new(center, 0.2, sphere_material));
+                    }
+
+                    // Metal 15% chance
+                    x if x < 0.95 => {
+                        let sphere_material = Metal::new(Color::random(), rng.gen_range(0.0..0.5));
+
+                        world.push(Sphere::new(center, 0.2, sphere_material));
+                    }
+
+                    // Glass 5% chance
+                    _ => {
+                        let sphere_material = Dielectric::new(1.5);
+
+                        world.push(Sphere::new(center, 0.2, sphere_material));
+                    }
+                };
+            }
+        }
+    }
+
+    // Three big spheres
+    let material1 = Dielectric::new(1.5);
+    world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
+
+    let material2 = Lambertian::new(SolidColor::new(0.4, 0.2, 0.1));
+    world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
+
+    let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
+    world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
+
+    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO)
+}
+fn scene2() -> SceneBuilder<BvhNode> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 20.0;
+    const APERTURE: f64 = 0.1;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    // Ground
+    let ground_material = Lambertian::new(SolidColor::new(0.5, 0.5, 0.5));
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -108,12 +188,11 @@ fn generate_random_scene() -> BvhNode {
                             Color::random() * Color::random(),
                         ));
 
-                        world.push(Sphere::new(
-                            center,
-                            // (center, center2),
+                        world.push(MovingSphere::new(
+                            (center, center2),
                             0.2,
                             sphere_material,
-                            // (0.0, 1.0),
+                            (0.0, 1.0),
                         ));
                     }
 
@@ -121,12 +200,11 @@ fn generate_random_scene() -> BvhNode {
                     x if x < 0.95 => {
                         let sphere_material = Metal::new(Color::random(), rng.gen_range(0.0..0.5));
 
-                        world.push(Sphere::new(
-                            center,
-                            // (center, center2),
+                        world.push(MovingSphere::new(
+                            (center, center2),
                             0.2,
                             sphere_material,
-                            // (0.0, 1.0),
+                            (0.0, 1.0),
                         ));
                     }
 
@@ -134,12 +212,11 @@ fn generate_random_scene() -> BvhNode {
                     _ => {
                         let sphere_material = Dielectric::new(1.5);
 
-                        world.push(Sphere::new(
-                            center,
-                            // (center, center2),
+                        world.push(MovingSphere::new(
+                            (center, center2),
                             0.2,
                             sphere_material,
-                            // (0.0, 1.0),
+                            (0.0, 1.0),
                         ));
                     }
                 };
@@ -157,7 +234,127 @@ fn generate_random_scene() -> BvhNode {
     let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
     world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
 
-    BvhNode::new(world.to_vec(), (0.0, 1.0))
+    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO)
+}
+fn scene3() -> SceneBuilder<BvhNode> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 20.0;
+    const APERTURE: f64 = 0.1;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    // Ground
+    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let ground_material = Lambertian::new(checker);
+    world.push(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    ));
+
+    // Random spheres
+    let mut rng = rand::thread_rng();
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat: f64 = rng.gen();
+            let center = Vec3::new(
+                0.9_f64 * rng.gen::<f64>() + f64::from(a),
+                0.2,
+                0.9 * rng.gen::<f64>() + f64::from(b),
+            );
+
+            if (center - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                match choose_mat {
+                    // Lambertian 80% chance
+                    x if x < 0.8 => {
+                        let sphere_material = Lambertian::new(SolidColor::from_color(
+                            Color::random() * Color::random(),
+                        ));
+
+                        world.push(Sphere::new(center, 0.2, sphere_material));
+                    }
+
+                    // Metal 15% chance
+                    x if x < 0.95 => {
+                        let sphere_material = Metal::new(Color::random(), rng.gen_range(0.0..0.5));
+
+                        world.push(Sphere::new(center, 0.2, sphere_material));
+                    }
+
+                    // Glass 5% chance
+                    _ => {
+                        let sphere_material = Dielectric::new(1.5);
+
+                        world.push(Sphere::new(center, 0.2, sphere_material));
+                    }
+                };
+            }
+        }
+    }
+
+    // Three big spheres
+    let material1 = Dielectric::new(1.5);
+    world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
+
+    let material2 = Lambertian::new(SolidColor::new(0.4, 0.2, 0.1));
+    world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
+
+    let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
+    world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
+
+    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO)
+}
+fn scene4() -> SceneBuilder<BvhNode> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 20.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let mat = Lambertian::new(checker);
+
+    let sphere1 = Sphere::new(Vec3::new(0.0, -10.0, 0.0), 10.0, mat.clone());
+    let sphere2 = Sphere::new(Vec3::new(0.0, 10.0, 0.0), 10.0, mat);
+
+    let world = BvhNode::new(sphere1, sphere2, (0.0, 0.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
 
 pub fn get_elapsed_time_message(start_time: std::time::Duration) -> String {

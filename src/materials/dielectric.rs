@@ -1,10 +1,10 @@
 use rand::Rng;
 
-use crate::color::Color;
 use crate::hittable::HitRecord;
 use crate::materials::{Material, ScatterRecord};
-use crate::ray::Ray;
-use crate::vec3::Vec3;
+use crate::Color;
+use crate::Ray;
+use crate::Vec3;
 
 #[derive(Clone)]
 pub struct Dielectric {
