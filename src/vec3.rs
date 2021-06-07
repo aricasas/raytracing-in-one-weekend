@@ -17,7 +17,7 @@ impl Distribution<Axis> for Standard {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct Vec3(f64, f64, f64);
 
 impl Vec3 {

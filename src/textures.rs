@@ -3,10 +3,12 @@ use crate::Vec3;
 
 mod checker;
 mod image;
+pub mod perlin;
 mod solid;
 pub use self::image::Image;
 pub use checker::CheckerTexture;
-pub use solid::SolidColor;
+pub use perlin::Noise;
+pub use solid::Solid;
 
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Color;

@@ -15,17 +15,17 @@ use raytracing::hittable::HittableList;
 use raytracing::materials::{Dielectric, Lambertian, Metal};
 use raytracing::scene::SceneBuilder;
 use raytracing::surfaces::{BvhNode, MovingSphere, Sphere};
-use raytracing::textures::{CheckerTexture, SolidColor};
+use raytracing::textures::{CheckerTexture, Noise, Solid};
 use raytracing::Camera;
 use raytracing::Color;
 use raytracing::Vec3;
 
 fn main() {
     // Scene
-    const IMAGE_WIDTH: u32 = 1920;
-    let scene = scene3()
+    const IMAGE_WIDTH: u32 = 640;
+    let scene = scene5()
         .image_size(IMAGE_WIDTH)
-        .samples_per_pixel(500)
+        .samples_per_pixel(30)
         .max_depth(50)
         .build();
 
@@ -34,9 +34,11 @@ fn main() {
 
     let rendered_colors = raytracing::render(&scene);
 
+    let render_duration = start_time.elapsed();
+
     eprintln!(
         "\nDone. Rendering took {}",
-        get_elapsed_time_message(start_time.elapsed())
+        get_elapsed_time_message(render_duration)
     );
 
     // Output image
@@ -74,7 +76,7 @@ fn scene1() -> SceneBuilder<BvhNode> {
     let mut world = HittableList::new();
 
     // Ground
-    let ground_material = Lambertian::new(SolidColor::new(0.5, 0.5, 0.5));
+    let ground_material = Lambertian::new(Solid::new(0.5, 0.5, 0.5));
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -97,9 +99,8 @@ fn scene1() -> SceneBuilder<BvhNode> {
                 match choose_mat {
                     // Lambertian 80% chance
                     x if x < 0.8 => {
-                        let sphere_material = Lambertian::new(SolidColor::from_color(
-                            Color::random() * Color::random(),
-                        ));
+                        let sphere_material =
+                            Lambertian::new(Solid::from_color(Color::random() * Color::random()));
 
                         world.push(Sphere::new(center, 0.2, sphere_material));
                     }
@@ -126,7 +127,7 @@ fn scene1() -> SceneBuilder<BvhNode> {
     let material1 = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Lambertian::new(SolidColor::new(0.4, 0.2, 0.1));
+    let material2 = Lambertian::new(Solid::new(0.4, 0.2, 0.1));
     world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
     let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
@@ -160,7 +161,7 @@ fn scene2() -> SceneBuilder<BvhNode> {
     let mut world = HittableList::new();
 
     // Ground
-    let ground_material = Lambertian::new(SolidColor::new(0.5, 0.5, 0.5));
+    let ground_material = Lambertian::new(Solid::new(0.5, 0.5, 0.5));
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -184,9 +185,8 @@ fn scene2() -> SceneBuilder<BvhNode> {
                 match choose_mat {
                     // Lambertian 80% chance
                     x if x < 0.8 => {
-                        let sphere_material = Lambertian::new(SolidColor::from_color(
-                            Color::random() * Color::random(),
-                        ));
+                        let sphere_material =
+                            Lambertian::new(Solid::from_color(Color::random() * Color::random()));
 
                         world.push(MovingSphere::new(
                             (center, center2),
@@ -228,7 +228,7 @@ fn scene2() -> SceneBuilder<BvhNode> {
     let material1 = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Lambertian::new(SolidColor::new(0.4, 0.2, 0.1));
+    let material2 = Lambertian::new(Solid::new(0.4, 0.2, 0.1));
     world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
     let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
@@ -286,9 +286,8 @@ fn scene3() -> SceneBuilder<BvhNode> {
                 match choose_mat {
                     // Lambertian 80% chance
                     x if x < 0.8 => {
-                        let sphere_material = Lambertian::new(SolidColor::from_color(
-                            Color::random() * Color::random(),
-                        ));
+                        let sphere_material =
+                            Lambertian::new(Solid::from_color(Color::random() * Color::random()));
 
                         world.push(Sphere::new(center, 0.2, sphere_material));
                     }
@@ -315,7 +314,7 @@ fn scene3() -> SceneBuilder<BvhNode> {
     let material1 = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Lambertian::new(SolidColor::new(0.4, 0.2, 0.1));
+    let material2 = Lambertian::new(Solid::new(0.4, 0.2, 0.1));
     world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
     let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
@@ -353,6 +352,39 @@ fn scene4() -> SceneBuilder<BvhNode> {
     let sphere2 = Sphere::new(Vec3::new(0.0, 10.0, 0.0), 10.0, mat);
 
     let world = BvhNode::new(sphere1, sphere2, (0.0, 0.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO)
+}
+fn scene5() -> SceneBuilder<BvhNode> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 20.0;
+    const APERTURE: f64 = 0.1;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let perlin = Noise::new(4.0);
+    let ground = Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Lambertian::new(perlin.clone()),
+    );
+    let sphere = Sphere::new(Vec3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(perlin));
+
+    let world = BvhNode::new(ground, sphere, (0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
