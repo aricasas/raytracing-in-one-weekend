@@ -32,7 +32,7 @@ fn main() {
     // Render
     let start_time = std::time::Instant::now();
 
-    let rendered_colors = raytracing::render(&scene);
+    let rendered_image = raytracing::render(&scene);
 
     let render_duration = start_time.elapsed();
 
@@ -42,13 +42,6 @@ fn main() {
     );
 
     // Output image
-    let mut rendered_image =
-        image::RgbImage::from_fn(scene.image_size().0, scene.image_size().1, |x, y| {
-            rendered_colors[(y * IMAGE_WIDTH + x) as usize]
-        });
-
-    image::imageops::flip_vertical_in_place(&mut rendered_image);
-
     rendered_image.save("out.png").unwrap();
 }
 

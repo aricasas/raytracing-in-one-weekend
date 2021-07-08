@@ -30,21 +30,7 @@ pub mod surfaces;
 pub mod textures;
 pub mod vec3;
 
-// /// Returns either 1.0 or -1.0 oscilating each time you pass the range
-// pub fn oscillate(x: f64, range: f64) -> f64 {
-//     let double_range = range * 2.0;
-//     let value = (x % double_range).abs();
-
-//     let mut result = if value < range { -1.0 } else { 1.0 };
-
-//     if x > 0.0 {
-//         result = -result;
-//     }
-
-//     result
-// }
-
-pub fn render<T: Hittable>(scene: &Scene<T>) -> Vec<image::Rgb<u8>> {
+pub fn render<T: Hittable>(scene: &Scene<T>) -> image::ImageBuffer<image::Rgb<u8>, Vec<u8>> {
     let (image_width, image_height) = scene.image_size();
 
     let bar = ProgressBar::new(u64::from(image_width * image_height));
@@ -52,7 +38,7 @@ pub fn render<T: Hittable>(scene: &Scene<T>) -> Vec<image::Rgb<u8>> {
         ProgressStyle::default_bar().template("[{elapsed_precise}] Rendering {percent}% done."),
     );
 
-    (0..(image_width * image_height))
+    let rendered_colors = (0..(image_width * image_height))
         .into_par_iter()
         .progress_with(bar)
         .map(|i| {
@@ -72,7 +58,16 @@ pub fn render<T: Hittable>(scene: &Scene<T>) -> Vec<image::Rgb<u8>> {
             pixel_color
         })
         .map(|pixel| image::Rgb(pixel.to_writeable_ints(scene.samples_per_pixel())))
-        .collect()
+        .collect::<Vec<image::Rgb<u8>>>();
+
+    let mut rendered_image =
+        image::RgbImage::from_fn(scene.image_size().0, scene.image_size().1, |x, y| {
+            rendered_colors[(y * image_width + x) as usize]
+        });
+
+    image::imageops::flip_vertical_in_place(&mut rendered_image);
+
+    rendered_image
 }
 
 pub const fn get_image_coordinates(i: u32, width: u32) -> (u32, u32) {
