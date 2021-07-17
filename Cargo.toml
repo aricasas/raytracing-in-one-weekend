@@ -6,8 +6,8 @@ edition = "2018"
 
 [dependencies]
 rand = "0.8.0"
-rayon = "1.5.0"
-indicatif = {version = "0.15.0", features = ["rayon"]}
+rayon = "1.5.1"
+indicatif = {version = "0.16.2", features = ["rayon"]}
 image = "0.23.14"
 
 [dev-dependencies]
