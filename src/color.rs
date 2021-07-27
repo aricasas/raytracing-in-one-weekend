@@ -1,3 +1,4 @@
+use image::Rgb;
 use rand::Rng;
 use std::ops;
 
@@ -52,6 +53,18 @@ impl Color {
             "{} {} {}",
             color_values[0], color_values[1], color_values[2]
         );
+    }
+}
+
+impl From<Rgb<u8>> for Color {
+    fn from(color: Rgb<u8>) -> Self {
+        const COLOR_SCALE: f64 = 1.0 / 255.0;
+
+        Self::new(
+            f64::from(color[0]) * COLOR_SCALE,
+            f64::from(color[1]) * COLOR_SCALE,
+            f64::from(color[2]) * COLOR_SCALE,
+        )
     }
 }
 

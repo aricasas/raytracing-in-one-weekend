@@ -9,13 +9,15 @@
 )]
 #![allow(clippy::must_use_candidate)]
 
+use std::sync::Arc;
+
 use rand::Rng;
 
 use raytracing::hittable::HittableList;
 use raytracing::materials::{Dielectric, Lambertian, Metal};
 use raytracing::scene::SceneBuilder;
 use raytracing::surfaces::{BvhNode, MovingSphere, Sphere};
-use raytracing::textures::{CheckerTexture, Noise, Solid};
+use raytracing::textures::{CheckerTexture, Image, Noise, Solid};
 use raytracing::Camera;
 use raytracing::Color;
 use raytracing::Vec3;
@@ -23,7 +25,7 @@ use raytracing::Vec3;
 fn main() {
     // Scene
     const IMAGE_WIDTH: u32 = 640;
-    let scene = scene5()
+    let scene = scene6()
         .image_size(IMAGE_WIDTH)
         .samples_per_pixel(30)
         .max_depth(50)
@@ -380,6 +382,37 @@ fn scene5() -> SceneBuilder<BvhNode> {
     let world = BvhNode::new(ground, sphere, (0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
+}
+fn scene6() -> SceneBuilder<Sphere<Lambertian<Image>>> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 20.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let earth_image = image::open("imgs/earthmap.jpg").unwrap();
+    let earth_texture = Image::new(Arc::new(earth_image.into_rgb8()));
+    let globe = Sphere::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        2.0,
+        Lambertian::new(earth_texture),
+    );
+
+    SceneBuilder::new(globe, camera, ASPECT_RATIO)
 }
 
 pub fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
