@@ -14,7 +14,7 @@ use std::sync::Arc;
 use rand::Rng;
 
 use raytracing::hittable::HittableList;
-use raytracing::materials::{Dielectric, Lambertian, Metal};
+use raytracing::materials::{Dielectric, DiffuseLight, Lambertian, Metal};
 use raytracing::scene::SceneBuilder;
 use raytracing::surfaces::{BvhNode, MovingSphere, Sphere};
 use raytracing::textures::{CheckerTexture, Image, Noise, Solid};
@@ -24,10 +24,10 @@ use raytracing::Vec3;
 
 fn main() {
     // Scene
-    const IMAGE_WIDTH: u32 = 640;
-    let scene = scene6()
+    const IMAGE_WIDTH: u32 = 400;
+    let scene = scene7()
         .image_size(IMAGE_WIDTH)
-        .samples_per_pixel(30)
+        .samples_per_pixel(1000)
         .max_depth(50)
         .build();
 
@@ -268,8 +268,8 @@ fn scene3() -> SceneBuilder<BvhNode> {
     // Random spheres
     let mut rng = rand::thread_rng();
 
-    for a in -11..11 {
-        for b in -11..11 {
+    for a in -20..20 {
+        for b in -20..20 {
             let choose_mat: f64 = rng.gen();
             let center = Vec3::new(
                 0.9_f64 * rng.gen::<f64>() + f64::from(a),
@@ -413,6 +413,50 @@ fn scene6() -> SceneBuilder<Sphere<Lambertian<Image>>> {
     );
 
     SceneBuilder::new(globe, camera, ASPECT_RATIO)
+}
+fn scene7() -> SceneBuilder<BvhNode> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(7.9, 3.0, 0.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 1.5, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 50.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 4.0 / 3.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    // Ground
+    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let ground_material = Lambertian::new(checker);
+    world.push(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    ));
+
+    // Light
+    let light = DiffuseLight::new(Solid::new(10.0, 10.0, 10.0));
+    world.push(Sphere::new(Vec3::new(0.0, 4.0, 2.0), 0.7, light));
+
+    // Glass spheres
+    let glass = Dielectric::new(1.5);
+    world.push(Sphere::new(Vec3::new(0.0, 2.0, 0.0), 1.0, glass));
+
+    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
 }
 
 pub fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
