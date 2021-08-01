@@ -34,10 +34,10 @@ impl Color {
     pub fn to_writeable_ints(&self, samples_per_pixel: u32) -> [u8; 3] {
         let samples_per_pixel = f64::from(samples_per_pixel);
 
-        // Divide the color by the number of samples and gamma-correct for gamma=2.0
-        let r = (self.r() / samples_per_pixel).sqrt();
-        let g = (self.g() / samples_per_pixel).sqrt();
-        let b = (self.b() / samples_per_pixel).sqrt();
+        // Divide the color by the number of samples and gamma-correct for gamma=2.2
+        let r = (self.r() / samples_per_pixel).powf(1.0 / 2.2);
+        let g = (self.g() / samples_per_pixel).powf(1.0 / 2.2);
+        let b = (self.b() / samples_per_pixel).powf(1.0 / 2.2);
 
         let r = (255.0 * r.clamp(0.0, 1.0)).round() as u8;
         let g = (255.0 * g.clamp(0.0, 1.0)).round() as u8;
