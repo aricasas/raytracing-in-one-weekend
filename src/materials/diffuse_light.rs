@@ -21,7 +21,7 @@ impl<T: Texture> DiffuseLight<T> {
 }
 
 impl<T: Texture> Material for DiffuseLight<T> {
-    fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, _record: &HitRecord) -> Option<ScatterRecord> {
         None
     }
 
