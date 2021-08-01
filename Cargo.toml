@@ -17,6 +17,8 @@ criterion = "0.3"
 name = "my_benchmark"
 harness = false
 
+[profile.dev]
+opt-level = 3
 
 [profile.release]
 lto = true
