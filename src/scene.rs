@@ -1,7 +1,8 @@
-use crate::{Camera, Hittable};
+use crate::{Camera, Color, Hittable};
 
 pub struct Scene<T: Hittable> {
     world: T,
+    background_color: Color,
     camera: Camera,
     image_size: (u32, u32),
     samples_per_pixel: u32,
@@ -10,6 +11,7 @@ pub struct Scene<T: Hittable> {
 impl<T: Hittable> Scene<T> {
     pub fn new(
         world: T,
+        background_color: Color,
         camera: Camera,
         image_size: (u32, u32),
         samples_per_pixel: u32,
@@ -17,6 +19,7 @@ impl<T: Hittable> Scene<T> {
     ) -> Self {
         Self {
             world,
+            background_color,
             camera,
             image_size,
             samples_per_pixel,
@@ -25,6 +28,9 @@ impl<T: Hittable> Scene<T> {
     }
     pub fn world(&self) -> &T {
         &self.world
+    }
+    pub fn background_color(&self) -> &Color {
+        &self.background_color
     }
     pub fn camera(&self) -> &Camera {
         &self.camera
@@ -42,6 +48,7 @@ impl<T: Hittable> Scene<T> {
 
 pub struct SceneBuilder<T: Hittable> {
     world: T,
+    background_color: Option<Color>,
     camera: Camera,
     aspect_ratio: f64,
     image_size: Option<(u32, u32)>,
@@ -53,6 +60,7 @@ impl<T: Hittable> SceneBuilder<T> {
     pub fn new(world: T, camera: Camera, aspect_ratio: f64) -> Self {
         Self {
             world,
+            background_color: None,
             camera,
             aspect_ratio,
             image_size: None,
@@ -63,6 +71,7 @@ impl<T: Hittable> SceneBuilder<T> {
 
     pub fn build(self) -> Scene<T> {
         let world = self.world;
+        let background_color = self.background_color.unwrap_or(Color::new(0.7, 0.8, 1.0));
         let camera = self.camera;
         let image_size = self
             .image_size
@@ -70,9 +79,20 @@ impl<T: Hittable> SceneBuilder<T> {
         let samples_per_pixel = self.samples_per_pixel.unwrap_or(50);
         let max_depth = self.max_depth.unwrap_or(50);
 
-        Scene::new(world, camera, image_size, samples_per_pixel, max_depth)
+        Scene::new(
+            world,
+            background_color,
+            camera,
+            image_size,
+            samples_per_pixel,
+            max_depth,
+        )
     }
 
+    pub fn background_color(mut self, color: Color) -> Self {
+        self.background_color = Some(color);
+        self
+    }
     pub fn image_size(mut self, width: u32) -> Self {
         self.image_size = Some((width, get_height(width, self.aspect_ratio)));
         self

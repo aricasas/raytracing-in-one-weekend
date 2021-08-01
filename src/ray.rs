@@ -25,7 +25,8 @@ impl Ray {
     }
 
     /// Calculates the final color of the ray
-    pub fn calculate_color<T: Hittable>(&self, world: &T, depth: u32) -> Color {
+    #[allow(clippy::missing_panics_doc)] // We check for nones, so unwrapping will never fail
+    pub fn calculate_color<T: Hittable>(&self, world: &T, background: &Color, depth: u32) -> Color {
         // If ray has bounced too many times
         if depth == 0 {
             return Color::new(0.0, 0.0, 0.0);
@@ -33,24 +34,28 @@ impl Ray {
 
         let hit_record = world.hit(self, 0.0001, f64::INFINITY);
 
-        if let Some(intersection) = hit_record {
-            let scatter_record = intersection.material.scatter(self, &intersection);
-
-            if let Some(scatter) = scatter_record {
-                return scatter.attenuation
-                    * scatter.scattered_ray.calculate_color(world, depth - 1);
-            }
-
-            return Color::new(0.0, 0.0, 0.0);
+        if hit_record.is_none() {
+            return background.clone();
         }
 
-        // If no hits, return a blueish color as the sky
-        let unit_direction = self.direction.unit_vector();
-        Color::linear_blend(
-            0.5 * (unit_direction.y() + 1.0),
-            &Color::new(1.0, 1.0, 1.0),
-            &Color::new(0.5, 0.7, 1.0),
-        )
+        let intersection = hit_record.unwrap();
+        let scatter_record = intersection.material.scatter(self, &intersection);
+        let emitted =
+            intersection
+                .material
+                .emitted(intersection.u, intersection.v, &intersection.p);
+
+        if scatter_record.is_none() {
+            return emitted;
+        }
+
+        let scatter = scatter_record.unwrap();
+
+        emitted
+            + scatter.attenuation
+                * scatter
+                    .scattered_ray
+                    .calculate_color(world, background, depth - 1)
     }
 }
 

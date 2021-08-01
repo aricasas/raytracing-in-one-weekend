@@ -54,7 +54,8 @@ pub fn render<T: Hittable>(scene: &Scene<T>) -> image::ImageBuffer<image::Rgb<u8
                 let v = (f64::from(y) + rng.gen::<f64>()) / f64::from(image_height - 1);
 
                 let ray = scene.camera().get_ray(u, v);
-                pixel_color += ray.calculate_color(scene.world(), scene.max_depth());
+                pixel_color +=
+                    ray.calculate_color(scene.world(), scene.background_color(), scene.max_depth());
             }
 
             pixel_color

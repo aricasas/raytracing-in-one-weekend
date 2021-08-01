@@ -10,6 +10,6 @@ pub use checker::CheckerTexture;
 pub use perlin::Noise;
 pub use solid::Solid;
 
-pub trait Texture: Send + Sync {
+pub trait Texture: Send + Sync + Clone {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Color;
 }
