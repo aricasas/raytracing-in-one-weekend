@@ -26,6 +26,7 @@ pub use vec3::Vec3;
 mod camera;
 mod color;
 pub mod hittable;
+pub mod instances;
 pub mod materials;
 mod ray;
 pub mod scene;
