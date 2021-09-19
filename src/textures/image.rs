@@ -15,7 +15,7 @@ impl Image {
 }
 
 impl Texture for Image {
-    fn value(&self, u: f64, v: f64, p: &Vec3) -> Color {
+    fn value(&self, u: f64, v: f64, _p: &Vec3) -> Color {
         // Clamp input texture coordinates to [0,1] x [1,0]
         let u = u.clamp(0.0, 1.0);
         let v = 1.0 - v.clamp(0.0, 1.0); // Flip V to image coordinates

@@ -26,7 +26,7 @@ impl Aabb {
             let mut t1 = (self.maximum[a] - ray.origin[a]) * inverse_direction;
 
             if inverse_direction < 0.0 {
-                std::mem::swap(&mut t0, &mut t1)
+                std::mem::swap(&mut t0, &mut t1);
             };
 
             t_min = if t0 > t_min { t0 } else { t_min };

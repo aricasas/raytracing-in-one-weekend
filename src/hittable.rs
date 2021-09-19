@@ -61,6 +61,7 @@ pub trait Hittable: Send + Sync {
 }
 
 /// A list to store hittable surfaces
+#[derive(Clone)]
 pub struct HittableList {
     pub surfaces: Vec<Arc<dyn Hittable>>,
 }

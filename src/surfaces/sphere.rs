@@ -9,7 +9,7 @@ use std::f64::consts::PI;
 pub struct Sphere<T: Material + Clone + 'static> {
     center: Vec3,
     radius: f64,
-    pub material: T,
+    material: T,
 }
 
 impl<T: Material + Clone + 'static> Sphere<T> {
