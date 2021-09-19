@@ -13,10 +13,11 @@ use std::sync::Arc;
 
 use rand::Rng;
 
-use raytracing::hittable::HittableList;
+use raytracing::hittable::{Hittable, HittableList};
+use raytracing::instances::{RotationY, Translation};
 use raytracing::materials::{Dielectric, DiffuseLight, Lambertian, Metal};
 use raytracing::scene::SceneBuilder;
-use raytracing::surfaces::{BvhNode, MovingSphere, Sphere};
+use raytracing::surfaces::{AABox, BvhNode, MovingSphere, Sphere, XYRect, XZRect, YZRect};
 use raytracing::textures::{CheckerTexture, Image, Noise, Solid};
 use raytracing::Camera;
 use raytracing::Color;
@@ -25,9 +26,9 @@ use raytracing::Vec3;
 fn main() {
     // Scene
     const IMAGE_WIDTH: u32 = 400;
-    let scene = scene7()
+    let scene = scene11()
         .image_size(IMAGE_WIDTH)
-        .samples_per_pixel(1000)
+        .samples_per_pixel(600)
         .max_depth(50)
         .build();
 
@@ -455,6 +456,223 @@ fn scene7() -> SceneBuilder<BvhNode> {
     world.push(Sphere::new(Vec3::new(0.0, 2.0, 0.0), 1.0, glass));
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+}
+fn scene8() -> SceneBuilder<BvhNode> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(5.0, 3.0, 0.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 50.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 4.0 / 3.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    // Ground
+    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let ground_material = Lambertian::new(checker);
+    world.push(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    ));
+
+    // Light
+    // let light = DiffuseLight::new(Solid::new(10.0, 10.0, 10.0));
+    // world.push(Sphere::new(Vec3::new(0.0, 4.0, 2.0), 0.7, light));
+
+    // Glass spheres
+    let glass = Dielectric::new(1.5);
+    world.push(Sphere::new(Vec3::new(0.0, 0.0, 0.0), 1.0, glass));
+
+    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO) /* .background_color(Color::new(0.0, 0.0, 0.0)) */
+}
+fn scene9() -> SceneBuilder<impl Hittable> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(278.0, 278.0, -800.0);
+    const LOOK_AT: Vec3 = Vec3::new(278.0, 278.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 40.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 1.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    let red = Lambertian::new(Solid::new(0.65, 0.05, 0.05));
+    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
+    let green = Lambertian::new(Solid::new(0.12, 0.45, 0.15));
+    let light = DiffuseLight::new(Solid::new(15.0, 15.0, 15.0));
+
+    world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 555.0, green));
+    world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, red));
+    world.push(XZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, white.clone()));
+    world.push(XZRect::new(
+        (0.0, 555.0),
+        (0.0, 555.0),
+        555.0,
+        white.clone(),
+    ));
+    world.push(XYRect::new((0.0, 555.0), (0.0, 555.0), 555.0, white));
+    world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+}
+fn scene10() -> SceneBuilder<impl Hittable> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(278.0, 278.0, -800.0);
+    const LOOK_AT: Vec3 = Vec3::new(278.0, 278.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 40.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 1.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    let red = Lambertian::new(Solid::new(0.65, 0.05, 0.05));
+    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
+    let green = Lambertian::new(Solid::new(0.12, 0.45, 0.15));
+    let light = DiffuseLight::new(Solid::new(15.0, 15.0, 15.0));
+
+    // Walls
+    world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 555.0, green));
+    world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, red));
+    world.push(XZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, white.clone()));
+    world.push(XZRect::new(
+        (0.0, 555.0),
+        (0.0, 555.0),
+        555.0,
+        white.clone(),
+    ));
+    world.push(XYRect::new(
+        (0.0, 555.0),
+        (0.0, 555.0),
+        555.0,
+        white.clone(),
+    ));
+
+    // Cubes
+    world.push(AABox::new(
+        Vec3::new(130.0, 0.0, 65.0),
+        Vec3::new(295.0, 165.0, 230.0),
+        white.clone(),
+    ));
+    world.push(AABox::new(
+        Vec3::new(265.0, 0.0, 295.0),
+        Vec3::new(430.0, 330.0, 460.0),
+        white,
+    ));
+
+    // Light
+    world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+}
+fn scene11() -> SceneBuilder<impl Hittable> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(278.0, 278.0, -800.0);
+    const LOOK_AT: Vec3 = Vec3::new(278.0, 278.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 40.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 1.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    let red = Lambertian::new(Solid::new(0.65, 0.05, 0.05));
+    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
+    let green = Lambertian::new(Solid::new(0.12, 0.45, 0.15));
+    let light = DiffuseLight::new(Solid::new(15.0, 15.0, 15.0));
+
+    // Walls
+    world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 555.0, green));
+    world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, red));
+    world.push(XZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, white.clone()));
+    world.push(XZRect::new(
+        (0.0, 555.0),
+        (0.0, 555.0),
+        555.0,
+        white.clone(),
+    ));
+    world.push(XYRect::new(
+        (0.0, 555.0),
+        (0.0, 555.0),
+        555.0,
+        white.clone(),
+    ));
+
+    // Cubes
+    let box1 = AABox::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 330.0, 165.0),
+        white.clone(),
+    )
+    .rotate_y_by(15.0_f64.to_radians())
+    .translate_by(Vec3::new(265.0, 0.0, 295.0));
+    let box2 = AABox::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 165.0, 165.0),
+        white,
+    )
+    .rotate_y_by(-18.0_f64.to_radians())
+    .translate_by(Vec3::new(130.0, 0.0, 65.0));
+
+    world.push(box1);
+    world.push(box2);
+
+    // Light
+    world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
 }
