@@ -154,6 +154,16 @@ impl ops::Index<Axis> for Vec3 {
         }
     }
 }
+impl ops::IndexMut<u8> for Vec3 {
+    fn index_mut(&mut self, index: u8) -> &mut Self::Output {
+        match index {
+            0 => &mut self.0,
+            1 => &mut self.1,
+            2 => &mut self.2,
+            _ => panic!(),
+        }
+    }
+}
 
 // Comparison
 impl PartialEq for Vec3 {
