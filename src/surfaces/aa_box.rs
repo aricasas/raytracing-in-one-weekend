@@ -34,7 +34,7 @@ impl AABox {
         sides.push(XZRect::new(
             (p0.x(), p1.x()),
             (p0.z(), p1.z()),
-            p1.y(),
+            p0.y(),
             material.clone(),
         ));
         sides.push(XZRect::new(
@@ -47,7 +47,7 @@ impl AABox {
         sides.push(YZRect::new(
             (p0.y(), p1.y()),
             (p0.z(), p1.z()),
-            p1.x(),
+            p0.x(),
             material.clone(),
         ));
         sides.push(YZRect::new(
