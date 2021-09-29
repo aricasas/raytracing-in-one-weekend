@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Ari <aricasasn@gmail.com>"]
 edition = "2018"
 
+[lib]
+name = "raytracing"
+path = "src/lib/lib.rs"
+
 [dependencies]
 rand = "0.8.0"
 rayon = "1.5.1"
