@@ -68,8 +68,8 @@ impl Perlin {
         }
     }
     fn perlin_generate_perm(p: &mut [u8; Self::POINT_COUNT]) {
-        for (i, num) in (0_u8..).zip(p.iter_mut()) {
-            *num = i;
+        for (i, num) in p.iter_mut().enumerate() {
+            *num = i as u8;
         }
 
         Self::permute(p);
@@ -142,7 +142,7 @@ impl Perlin {
 
     pub fn turbulence(&self, point: &Vec3, depth: u32) -> f64 {
         let mut accum = 0.0;
-        let mut temp_p = point.clone();
+        let mut temp_p = *point;
         let mut weight = 1.0;
 
         for _ in 0..depth {

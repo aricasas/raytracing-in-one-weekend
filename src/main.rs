@@ -9,15 +9,15 @@
 )]
 #![allow(clippy::must_use_candidate)]
 
-use std::sync::Arc;
-
 use rand::Rng;
 
 use raytracing::hittable::{Hittable, HittableList};
-use raytracing::instances::{RotationY, Translation};
+use raytracing::instances::{RotateY, RotationY, Translate, Translation};
 use raytracing::materials::{Dielectric, DiffuseLight, Lambertian, Metal};
 use raytracing::scene::SceneBuilder;
-use raytracing::surfaces::{AABox, BvhNode, MovingSphere, Sphere, XYRect, XZRect, YZRect};
+use raytracing::surfaces::{
+    AABox, BvhNode, ConstantMedium, MovingSphere, Sphere, XYRect, XZRect, YZRect,
+};
 use raytracing::textures::{CheckerTexture, Image, Noise, Solid};
 use raytracing::Camera;
 use raytracing::Color;
@@ -25,10 +25,10 @@ use raytracing::Vec3;
 
 fn main() {
     // Scene
-    const IMAGE_WIDTH: u32 = 400;
-    let scene = scene11()
+    const IMAGE_WIDTH: u32 = 600;
+    let scene = scene13()
         .image_size(IMAGE_WIDTH)
-        .samples_per_pixel(600)
+        .samples_per_pixel(500)
         .max_depth(50)
         .build();
 
@@ -406,7 +406,7 @@ fn scene6() -> SceneBuilder<Sphere<Lambertian<Image>>> {
     );
 
     let earth_image = image::open("imgs/earthmap.jpg").unwrap();
-    let earth_texture = Image::new(Arc::new(earth_image.into_rgb8()));
+    let earth_texture = Image::new(earth_image.into_rgb8());
     let globe = Sphere::new(
         Vec3::new(0.0, 0.0, 0.0),
         2.0,
@@ -673,6 +673,191 @@ fn scene11() -> SceneBuilder<impl Hittable> {
 
     // Light
     world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
+
+    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+}
+fn scene12() -> SceneBuilder<impl Hittable> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(278.0, 278.0, -800.0);
+    const LOOK_AT: Vec3 = Vec3::new(278.0, 278.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 40.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 1.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    let red = Lambertian::new(Solid::new(0.65, 0.05, 0.05));
+    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
+    let green = Lambertian::new(Solid::new(0.12, 0.45, 0.15));
+    let light = DiffuseLight::new(Solid::new(15.0, 15.0, 15.0));
+
+    // Walls
+    world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 555.0, green));
+    world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, red));
+    world.push(XZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, white.clone()));
+    world.push(XZRect::new(
+        (0.0, 555.0),
+        (0.0, 555.0),
+        555.0,
+        white.clone(),
+    ));
+    world.push(XYRect::new(
+        (0.0, 555.0),
+        (0.0, 555.0),
+        555.0,
+        white.clone(),
+    ));
+
+    // Cubes
+    let box1 = AABox::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 330.0, 165.0),
+        white.clone(),
+    )
+    .rotate_y_by(15.0_f64.to_radians())
+    .translate_by(Vec3::new(265.0, 0.0, 295.0));
+    let box2 = AABox::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(165.0, 165.0, 165.0),
+        white,
+    )
+    .rotate_y_by(-18.0_f64.to_radians())
+    .translate_by(Vec3::new(130.0, 0.0, 65.0));
+
+    world.push(ConstantMedium::new(box1, Solid::new(0.0, 0.0, 0.0), 0.01));
+    world.push(ConstantMedium::new(box2, Solid::new(1.0, 1.0, 1.0), 0.01));
+
+    // Light
+    world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
+
+    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+}
+fn scene13() -> SceneBuilder<impl Hittable> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(478.0, 278.0, -600.0);
+    const LOOK_AT: Vec3 = Vec3::new(278.0, 278.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 40.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 1.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut rng = rand::thread_rng();
+
+    let mut world = HittableList::new();
+
+    //  Ground
+    let mut ground_boxes = HittableList::new();
+    let ground = Lambertian::new(Solid::new(0.48, 0.83, 0.53));
+
+    for i in 0..20 {
+        for j in 0..20 {
+            let w = 100.0;
+            let point0 = Vec3::new(-1000.0 + (w * i as f64), 0.0, -1000.0 + (w * j as f64));
+            let point1 = Vec3::new(point0.x() + w, rng.gen_range(1.0..101.0), point0.z() + w);
+
+            ground_boxes.push(AABox::new(point0, point1, ground.clone()));
+        }
+    }
+
+    world.push(BvhNode::from_vec(ground_boxes.into_vec(), (0.0, 1.0)));
+
+    let light = DiffuseLight::new(Solid::new(7.0, 7.0, 7.0));
+    world.push(XZRect::new((123.0, 423.0), (147.0, 412.0), 554.0, light));
+
+    let center1 = Vec3::new(400.0, 400.0, 200.0);
+    let center2 = center1 + Vec3::new(30.0, 0.0, 0.0);
+    let moving_sphere_material = Lambertian::new(Solid::new(0.7, 0.3, 0.1));
+    world.push(MovingSphere::new(
+        (center1, center2),
+        50.0,
+        moving_sphere_material,
+        (0.0, 1.0),
+    ));
+
+    world.push(Sphere::new(
+        Vec3::new(260.0, 150.0, 45.0),
+        50.0,
+        Dielectric::new(1.5),
+    ));
+    world.push(Sphere::new(
+        Vec3::new(0.0, 150.0, 145.0),
+        50.0,
+        Metal::new(Color::new(0.8, 0.8, 0.9), 1.0),
+    ));
+
+    let boundary = Sphere::new(Vec3::new(360.0, 150.0, 145.0), 70.0, Dielectric::new(1.5));
+    world.push(boundary.clone());
+    world.push(ConstantMedium::new(
+        boundary,
+        Solid::new(0.2, 0.4, 0.9),
+        0.2,
+    ));
+    let boundary = Sphere::new(Vec3::new(0.0, 0.0, 0.0), 5000.0, Dielectric::new(1.5));
+    world.push(ConstantMedium::new(
+        boundary,
+        Solid::new(1.0, 1.0, 1.0),
+        0.0001,
+    ));
+
+    let emat = Lambertian::new(Image::new(
+        image::open("imgs/earthmap.jpg").unwrap().into_rgb8(),
+    ));
+    world.push(Sphere::new(Vec3::new(400.0, 200.0, 400.0), 100.0, emat));
+    let pertext = Noise::new(0.1);
+    world.push(Sphere::new(
+        Vec3::new(220.0, 280.0, 300.0),
+        80.0,
+        Lambertian::new(pertext),
+    ));
+
+    let mut boxes2 = HittableList::new();
+    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
+    for _ in 0..1000 {
+        boxes2.push(Sphere::new(
+            Vec3::random_min_max(0.0, 165.0),
+            10.0,
+            white.clone(),
+        ));
+    }
+
+    world.push(Translate::new(
+        RotateY::new(
+            BvhNode::from_vec(boxes2.into_vec(), (0.0, 1.0)),
+            15.0_f64.to_radians(),
+        ),
+        Vec3::new(-100.0, 270.0, 395.0),
+    ));
+
+    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
 }

@@ -134,7 +134,7 @@ impl Hittable for BvhNode {
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::materials::dielectric::Dielectric;
+    use crate::materials::Dielectric;
     use crate::surfaces::sphere::Sphere;
     use crate::vec3::Vec3;
 

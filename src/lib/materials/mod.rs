@@ -4,12 +4,14 @@ use super::hittable::HitRecord;
 use super::Color;
 use super::Ray;
 
-pub mod dielectric;
-pub mod diffuse_light;
-pub mod lambertian;
-pub mod metal;
+mod dielectric;
+mod diffuse_light;
+mod isotropic;
+mod lambertian;
+mod metal;
 pub use dielectric::Dielectric;
 pub use diffuse_light::DiffuseLight;
+pub use isotropic::Isotropic;
 pub use lambertian::Lambertian;
 pub use metal::Metal;
 
@@ -18,7 +20,7 @@ pub use metal::Metal;
 /// Defines the scattering behaviour of that material
 pub trait Material: Send + Sync {
     fn scatter(&self, ray: &Ray, record: &HitRecord) -> Option<ScatterRecord>;
-    fn emitted(&self, u: f64, v: f64, point: &Vec3) -> Color {
+    fn emitted(&self, _u: f64, _v: f64, _point: &Vec3) -> Color {
         Color::new(0.0, 0.0, 0.0)
     }
 }

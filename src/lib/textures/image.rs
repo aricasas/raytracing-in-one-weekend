@@ -9,8 +9,10 @@ pub struct Image {
     image: Arc<ImageBuffer<Rgb<u8>, Vec<u8>>>,
 }
 impl Image {
-    pub fn new(image: Arc<ImageBuffer<Rgb<u8>, Vec<u8>>>) -> Self {
-        Self { image }
+    pub fn new(image: ImageBuffer<Rgb<u8>, Vec<u8>>) -> Self {
+        Self {
+            image: Arc::new(image),
+        }
     }
 }
 
