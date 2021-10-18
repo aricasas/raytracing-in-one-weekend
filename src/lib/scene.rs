@@ -93,7 +93,7 @@ impl<T: Hittable> SceneBuilder<T> {
         self.background_color = Some(color);
         self
     }
-    pub fn image_size(mut self, width: u32) -> Self {
+    pub fn image_width(mut self, width: u32) -> Self {
         self.image_size = Some((width, get_height(width, self.aspect_ratio)));
         self
     }

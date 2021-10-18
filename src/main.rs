@@ -25,9 +25,8 @@ use raytracing::Vec3;
 
 fn main() {
     // Scene
-    const IMAGE_WIDTH: u32 = 600;
     let scene = scene13()
-        .image_size(IMAGE_WIDTH)
+        .image_width(600)
         .samples_per_pixel(500)
         .max_depth(50)
         .build();
