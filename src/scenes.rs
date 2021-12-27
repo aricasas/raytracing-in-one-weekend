@@ -12,7 +12,7 @@ use raytracing::Camera;
 use raytracing::Color;
 use raytracing::Vec3;
 
-pub fn scene1() -> SceneBuilder<BvhNode> {
+pub fn scene1() -> SceneBuilder<impl Hittable> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
@@ -97,7 +97,7 @@ pub fn scene1() -> SceneBuilder<BvhNode> {
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
-pub fn scene2() -> SceneBuilder<BvhNode> {
+pub fn scene2() -> SceneBuilder<impl Hittable> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
@@ -198,7 +198,7 @@ pub fn scene2() -> SceneBuilder<BvhNode> {
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
-pub fn scene3() -> SceneBuilder<BvhNode> {
+pub fn scene3() -> SceneBuilder<impl Hittable> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
@@ -284,7 +284,7 @@ pub fn scene3() -> SceneBuilder<BvhNode> {
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
-pub fn scene4() -> SceneBuilder<BvhNode> {
+pub fn scene4() -> SceneBuilder<impl Hittable> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
@@ -315,7 +315,7 @@ pub fn scene4() -> SceneBuilder<BvhNode> {
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
-pub fn scene5() -> SceneBuilder<BvhNode> {
+pub fn scene5() -> SceneBuilder<impl Hittable> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
@@ -348,7 +348,7 @@ pub fn scene5() -> SceneBuilder<BvhNode> {
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
-pub fn scene6() -> SceneBuilder<Sphere<Lambertian<Image>>> {
+pub fn scene6() -> SceneBuilder<impl Hittable> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
@@ -379,7 +379,7 @@ pub fn scene6() -> SceneBuilder<Sphere<Lambertian<Image>>> {
 
     SceneBuilder::new(globe, camera, ASPECT_RATIO)
 }
-pub fn scene7() -> SceneBuilder<BvhNode> {
+pub fn scene7() -> SceneBuilder<impl Hittable> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(7.9, 3.0, 0.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 1.5, 0.0);
@@ -423,7 +423,7 @@ pub fn scene7() -> SceneBuilder<BvhNode> {
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
 }
-pub fn scene8() -> SceneBuilder<BvhNode> {
+pub fn scene8() -> SceneBuilder<impl Hittable> {
     // Camera
     const LOOK_FROM: Vec3 = Vec3::new(5.0, 3.0, 0.0);
     const LOOK_AT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
