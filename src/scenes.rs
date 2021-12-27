@@ -745,7 +745,11 @@ pub fn scene13() -> SceneBuilder<impl Hittable> {
     for i in 0..20 {
         for j in 0..20 {
             let w = 100.0;
-            let point0 = Vec3::new(-1000.0 + (w * i as f64), 0.0, -1000.0 + (w * j as f64));
+            let point0 = Vec3::new(
+                -1000.0 + (w * f64::from(i)),
+                0.0,
+                -1000.0 + (w * f64::from(j)),
+            );
             let point1 = Vec3::new(point0.x() + w, rng.gen_range(1.0..101.0), point0.z() + w);
 
             ground_boxes.push(AABox::new(point0, point1, ground.clone()));

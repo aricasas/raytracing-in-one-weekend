@@ -22,9 +22,12 @@ impl<T: Hittable> RotateY<T> {
             for i in 0..2 {
                 for j in 0..2 {
                     for k in 0..2 {
-                        let x = i as f64 * b_box.maximum.x() + (1 - i) as f64 * b_box.minimum.x();
-                        let y = j as f64 * b_box.maximum.y() + (1 - j) as f64 * b_box.minimum.y();
-                        let z = k as f64 * b_box.maximum.z() + (1 - k) as f64 * b_box.minimum.z();
+                        let x =
+                            f64::from(i) * b_box.maximum.x() + f64::from(1 - i) * b_box.minimum.x();
+                        let y =
+                            f64::from(j) * b_box.maximum.y() + f64::from(1 - j) * b_box.minimum.y();
+                        let z =
+                            f64::from(k) * b_box.maximum.z() + f64::from(1 - k) * b_box.minimum.z();
 
                         let new_x = cos_theta * x + sin_theta * z;
                         let new_z = -sin_theta * x + cos_theta * z;
