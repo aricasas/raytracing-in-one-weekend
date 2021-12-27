@@ -4,7 +4,7 @@ use std::ops;
 
 use crate::Vec3;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Color(Vec3);
 
 impl Color {
