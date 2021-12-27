@@ -76,6 +76,81 @@ pub fn render<T: Hittable>(scene: &Scene<T>) -> image::ImageBuffer<image::Rgb<u8
     rendered_image
 }
 
+pub fn render_new<T: Hittable>(scene: &Scene<T>) -> image::ImageBuffer<image::Rgb<u8>, Vec<u8>> {
+    const CHUNK_SIZE: u32 = 16;
+
+    let (image_width, image_height) = scene.image_size();
+
+    let num_chunks_per_line = if image_width % CHUNK_SIZE == 0 {
+        image_width / CHUNK_SIZE
+    } else {
+        image_width / CHUNK_SIZE + 1
+    };
+    let num_chunks_per_col = if image_height % CHUNK_SIZE == 0 {
+        image_height / CHUNK_SIZE
+    } else {
+        image_height / CHUNK_SIZE + 1
+    };
+
+    let num_chunks = num_chunks_per_line * num_chunks_per_col;
+
+    let bar = ProgressBar::new(u64::from(num_chunks));
+    bar.set_style(
+        ProgressStyle::default_bar()
+            .template("[{elapsed_precise}] Rendering {percent}% done. ETA: {eta_precise}"),
+    );
+
+    let rendered_chunks = (0..num_chunks)
+        .into_par_iter()
+        .progress_with(bar)
+        .map_init(rand::thread_rng, |rng, chunk_index| {
+            let chunk_x_offset = (chunk_index % num_chunks_per_line) * CHUNK_SIZE;
+            let chunk_y_offset = (chunk_index / num_chunks_per_line) * CHUNK_SIZE;
+
+            let mut pixels = [Color::new(0.0, 0.0, 0.0); (CHUNK_SIZE * CHUNK_SIZE) as usize];
+
+            for (i, color) in pixels.iter_mut().enumerate() {
+                let (in_chunk_x, in_chunk_y) = get_image_coordinates(i as u32, CHUNK_SIZE);
+
+                let (pixel_x, pixel_y) = (chunk_x_offset + in_chunk_x, chunk_y_offset + in_chunk_y);
+
+                if pixel_x < image_width && pixel_y < image_height {
+                    for _ in 0..scene.samples_per_pixel() {
+                        let u =
+                            (f64::from(pixel_x) + rng.gen::<f64>()) / f64::from(image_width - 1);
+                        let v =
+                            (f64::from(pixel_y) + rng.gen::<f64>()) / f64::from(image_height - 1);
+
+                        let ray = scene.camera().get_ray(u, v);
+                        *color += ray.calculate_color(
+                            scene.world(),
+                            scene.background_color(),
+                            scene.max_depth(),
+                        );
+                    }
+                }
+            }
+
+            pixels
+        })
+        .collect::<Vec<[Color; (CHUNK_SIZE * CHUNK_SIZE) as usize]>>();
+
+    let mut rendered_image =
+        image::RgbImage::from_fn(scene.image_size().0, scene.image_size().1, |x, y| {
+            let chunk_index = (y / CHUNK_SIZE) * num_chunks_per_line + x / CHUNK_SIZE;
+            let inner_index = (y % CHUNK_SIZE) * CHUNK_SIZE + x % CHUNK_SIZE;
+
+            image::Rgb(
+                rendered_chunks[chunk_index as usize][inner_index as usize]
+                    .to_writeable_ints(scene.samples_per_pixel()),
+            )
+        });
+
+    image::imageops::flip_vertical_in_place(&mut rendered_image);
+
+    rendered_image
+}
+
 pub const fn get_image_coordinates(i: u32, width: u32) -> (u32, u32) {
     let x = i as u32 % width;
     let y = i / width;
