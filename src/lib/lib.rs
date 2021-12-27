@@ -39,7 +39,8 @@ pub fn render<T: Hittable>(scene: &Scene<T>) -> image::ImageBuffer<image::Rgb<u8
 
     let bar = ProgressBar::new(u64::from(image_width * image_height));
     bar.set_style(
-        ProgressStyle::default_bar().template("[{elapsed_precise}] Rendering {percent}% done."),
+        ProgressStyle::default_bar()
+            .template("[{elapsed_precise}] Rendering {percent}% done. ETA: {eta_precise}"),
     );
 
     let rendered_colors = (0..(image_width * image_height))
