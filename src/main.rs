@@ -7,26 +7,26 @@
     clippy::perf,
     clippy::style
 )]
-#![allow(clippy::must_use_candidate)]
 
 mod scenes;
+
 fn main() {
     // Scene
-    let scene = scenes::scene14()
-        .image_width(2560)
-        .samples_per_pixel(30_000)
-        .max_depth(5)
+    let scene = scenes::scene3()
+        .image_width(1024)
+        .samples_per_pixel(300)
+        .max_depth(10)
         .build();
 
     // Render
     let start_time = std::time::Instant::now();
 
-    let rendered_image = raytracing::render(&scene);
+    let rendered_image = raytracing::render_chunked(&scene);
 
     let render_duration = start_time.elapsed();
 
     eprintln!(
-        "\nDone. Rendering took {}",
+        "Done. Rendering took {}",
         get_elapsed_time_message(render_duration)
     );
 
@@ -34,7 +34,7 @@ fn main() {
     rendered_image.save("out.png").unwrap();
 }
 
-pub fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
+fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
     let mut seconds_passed = start_time.as_secs();
 
     let hours_passed = seconds_passed / 3600;
@@ -61,66 +61,4 @@ pub fn get_elapsed_time_message(start_time: std::time::Duration) -> String {
         seconds_passed,
         start_time.subsec_millis()
     )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::time::Duration;
-
-    #[test]
-    fn test_get_elapsed_time_message() {
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(0)),
-            String::from("0.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs_f32(0.001)),
-            String::from("0.001 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs_f32(0.5)),
-            String::from("0.500 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs_f32(0.999)),
-            String::from("0.999 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(15)),
-            String::from("15.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(59)),
-            String::from("59.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(60)),
-            String::from("1 minutes, and 0.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(61)),
-            String::from("1 minutes, and 1.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(1000)),
-            String::from("16 minutes, and 40.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(3599)),
-            String::from("59 minutes, and 59.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(3600)),
-            String::from("1 hours, 0.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(3601)),
-            String::from("1 hours, 1.000 seconds.")
-        );
-        assert_eq!(
-            get_elapsed_time_message(Duration::from_secs(50_000)),
-            String::from("13 hours, 53 minutes, and 20.000 seconds.")
-        );
-    }
 }
