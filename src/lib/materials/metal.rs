@@ -24,7 +24,7 @@ impl Material for Metal {
         let reflected = Vec3::reflect(&ray.direction.unit_vector(), &record.normal);
 
         let scatter_record = ScatterRecord::new(
-            self.albedo.clone(),
+            self.albedo,
             Ray::new(
                 record.p,
                 reflected + Vec3::random_in_unit_sphere() * self.fuzz,

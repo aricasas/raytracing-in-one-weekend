@@ -19,6 +19,6 @@ impl Solid {
 
 impl Texture for Solid {
     fn value(&self, _: f64, _: f64, _: &Vec3) -> Color {
-        self.color_value.clone()
+        self.color_value
     }
 }

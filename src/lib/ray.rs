@@ -35,7 +35,7 @@ impl Ray {
         let hit_record = world.hit(self, 0.0001, f64::INFINITY);
 
         if hit_record.is_none() {
-            return background.clone();
+            return *background;
         }
 
         let intersection = hit_record.unwrap();
