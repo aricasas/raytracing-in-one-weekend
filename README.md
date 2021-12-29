@@ -18,7 +18,7 @@ For maximum performance but a longer compile time, use:
 RUSTFLAGS="-C target-cpu=native" cargo run --release
 ```
 
-Here's a gallery of all the scenes I've programmed in 1024 width images with 300 samples per pixel
+Here's a gallery of all the scenes I've programmed in 1024 width images with 300 samples per pixel. If you want to see some of these in higher quality, you can check out [this post](https://www.aricasas.com/programming/render-showcase/) in my webpage.
 
 ![](imgs/scenes/1.png)
 ![](imgs/scenes/2.png)
