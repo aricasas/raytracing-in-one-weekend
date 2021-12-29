@@ -9,7 +9,6 @@ name = "raytracing"
 path = "src/lib/lib.rs"
 
 [dependencies]
-clap = { version = "3.0.0-rc.8", features = ["derive"] }
 rand = "0.8.0"
 rayon = "1.5.1"
 indicatif = { version = "0.16.2", features = ["rayon"] }
