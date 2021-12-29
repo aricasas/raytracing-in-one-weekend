@@ -76,7 +76,9 @@ pub fn render<T: Hittable>(scene: &Scene<T>) -> image::ImageBuffer<image::Rgb<u8
     rendered_image
 }
 
-pub fn render_new<T: Hittable>(scene: &Scene<T>) -> image::ImageBuffer<image::Rgb<u8>, Vec<u8>> {
+pub fn render_chunked<T: Hittable>(
+    scene: &Scene<T>,
+) -> image::ImageBuffer<image::Rgb<u8>, Vec<u8>> {
     const CHUNK_SIZE: u32 = 16;
 
     let (image_width, image_height) = scene.image_size();
