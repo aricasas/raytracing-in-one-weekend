@@ -121,7 +121,7 @@ impl Hittable for BvhNode {
                 let right_hit_record = self.right.hit(ray, t_min, left_hit_record.t);
                 // and if it does, return that
                 // Otherwise, return the original left hit
-                Some(right_hit_record.map_or(left_hit_record, |rec| rec))
+                Some(right_hit_record.unwrap_or(left_hit_record))
             },
         )
     }
