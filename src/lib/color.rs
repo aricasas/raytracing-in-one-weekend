@@ -7,6 +7,14 @@ use crate::Vec3;
 #[derive(Clone, Copy)]
 pub struct Color(Vec3);
 
+pub const BLACK: Color = Color::new(0.0, 0.0, 0.0);
+pub const BLACKISH: Color = Color::new(0.1, 0.1, 0.1);
+pub const WHITE: Color = Color::new(1.0, 1.0, 1.0);
+pub const WHITISH: Color = Color::new(0.73, 0.73, 0.73);
+pub const BLUE: Color = Color::new(0.0941, 0.0588, 0.58);
+pub const GREEN: Color = Color::new(0.12, 0.45, 0.15);
+pub const RED: Color = Color::new(0.65, 0.05, 0.05);
+
 impl Color {
     pub const fn new(r: f64, g: f64, b: f64) -> Self {
         Self(Vec3::new(r, g, b))
