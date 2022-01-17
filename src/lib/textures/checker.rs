@@ -1,4 +1,4 @@
-use super::{Solid, Texture};
+use super::Texture;
 use crate::{Color, Vec3};
 
 #[derive(Clone)]
@@ -10,14 +10,6 @@ pub struct CheckerTexture<T: Texture, G: Texture> {
 impl<T: Texture, G: Texture> CheckerTexture<T, G> {
     pub fn new(odd: T, even: G) -> Self {
         Self { odd, even }
-    }
-}
-impl CheckerTexture<Solid, Solid> {
-    pub const fn from_color(odd: Color, even: Color) -> Self {
-        Self {
-            odd: Solid::from_color(odd),
-            even: Solid::from_color(even),
-        }
     }
 }
 

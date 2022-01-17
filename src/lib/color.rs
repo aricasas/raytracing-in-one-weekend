@@ -2,7 +2,11 @@ use image::Rgb;
 use rand::Rng;
 use std::ops;
 
-use crate::Vec3;
+use crate::{
+    materials::{Lambertian, Metal},
+    textures::Texture,
+    Vec3,
+};
 
 #[derive(Clone, Copy)]
 pub struct Color(Vec3);
@@ -61,6 +65,19 @@ impl Color {
             "{} {} {}",
             color_values[0], color_values[1], color_values[2]
         );
+    }
+
+    pub fn lambertian(self) -> Lambertian<Color> {
+        Lambertian::new(self)
+    }
+    pub fn metal(self, fuzz: f64) -> Metal {
+        Metal::new(self, fuzz)
+    }
+}
+
+impl Texture for Color {
+    fn value(&self, _u: f64, _v: f64, _p: &Vec3) -> Color {
+        *self
     }
 }
 

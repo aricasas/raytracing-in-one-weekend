@@ -1,13 +1,14 @@
 use rand::Rng;
 
+use raytracing::color;
 use raytracing::hittable::{Hittable, HittableList};
 use raytracing::instances::{RotateY, RotationY, Translate, Translation};
-use raytracing::materials::{Dielectric, DiffuseLight, Lambertian, Metal};
+use raytracing::materials::{Dielectric, DiffuseLight};
 use raytracing::scene::SceneBuilder;
 use raytracing::surfaces::{
     AABox, BvhNode, ConstantMedium, MovingSphere, Sphere, XYRect, XZRect, YZRect,
 };
-use raytracing::textures::{CheckerTexture, Image, Noise, Solid};
+use raytracing::textures::{CheckerTexture, Image, Noise, Texture};
 use raytracing::Camera;
 use raytracing::Color;
 use raytracing::Vec3;
@@ -36,7 +37,7 @@ pub fn scene1() -> SceneBuilder<impl Hittable> {
     let mut world = HittableList::new();
 
     // Ground
-    let ground_material = Lambertian::new(Solid::new(0.5, 0.5, 0.5));
+    let ground_material = Color::new(0.5, 0.5, 0.5).lambertian();
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -59,15 +60,14 @@ pub fn scene1() -> SceneBuilder<impl Hittable> {
                 match choose_mat {
                     // Lambertian 80% chance
                     x if x < 0.8 => {
-                        let sphere_material =
-                            Lambertian::new(Solid::from_color(Color::random() * Color::random()));
+                        let sphere_material = (Color::random() * Color::random()).lambertian();
 
                         world.push(Sphere::new(center, 0.2, sphere_material));
                     }
 
                     // Metal 15% chance
                     x if x < 0.95 => {
-                        let sphere_material = Metal::new(Color::random(), rng.gen_range(0.0..0.5));
+                        let sphere_material = Color::random().metal(rng.gen_range(0.0..0.5));
 
                         world.push(Sphere::new(center, 0.2, sphere_material));
                     }
@@ -87,10 +87,10 @@ pub fn scene1() -> SceneBuilder<impl Hittable> {
     let material1 = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Lambertian::new(Solid::new(0.4, 0.2, 0.1));
+    let material2 = Color::new(0.4, 0.2, 0.1).lambertian();
     world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
-    let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
+    let material3 = Color::new(0.7, 0.6, 0.5).metal(0.0);
     world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
@@ -121,7 +121,7 @@ pub fn scene2() -> SceneBuilder<impl Hittable> {
     let mut world = HittableList::new();
 
     // Ground
-    let ground_material = Lambertian::new(Solid::new(0.5, 0.5, 0.5));
+    let ground_material = Color::new(0.5, 0.5, 0.5).lambertian();
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -145,8 +145,7 @@ pub fn scene2() -> SceneBuilder<impl Hittable> {
                 match choose_mat {
                     // Lambertian 80% chance
                     x if x < 0.8 => {
-                        let sphere_material =
-                            Lambertian::new(Solid::from_color(Color::random() * Color::random()));
+                        let sphere_material = (Color::random() * Color::random()).lambertian();
 
                         world.push(MovingSphere::new(
                             (center, center2),
@@ -158,7 +157,7 @@ pub fn scene2() -> SceneBuilder<impl Hittable> {
 
                     // Metal 15% chance
                     x if x < 0.95 => {
-                        let sphere_material = Metal::new(Color::random(), rng.gen_range(0.0..0.5));
+                        let sphere_material = Color::random().metal(rng.gen_range(0.0..0.5));
 
                         world.push(MovingSphere::new(
                             (center, center2),
@@ -188,10 +187,10 @@ pub fn scene2() -> SceneBuilder<impl Hittable> {
     let material1 = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Lambertian::new(Solid::new(0.4, 0.2, 0.1));
+    let material2 = Color::new(0.4, 0.2, 0.1).lambertian();
     world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
-    let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
+    let material3 = Color::new(0.7, 0.6, 0.5).metal(0.0);
     world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
@@ -222,8 +221,8 @@ pub fn scene3() -> SceneBuilder<impl Hittable> {
     let mut world = HittableList::new();
 
     // Ground
-    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
-    let ground_material = Lambertian::new(checker);
+    let checker = CheckerTexture::new(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let ground_material = checker.lambertian();
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -246,15 +245,14 @@ pub fn scene3() -> SceneBuilder<impl Hittable> {
                 match choose_mat {
                     // Lambertian 80% chance
                     x if x < 0.8 => {
-                        let sphere_material =
-                            Lambertian::new(Solid::from_color(Color::random() * Color::random()));
+                        let sphere_material = (Color::random() * Color::random()).lambertian();
 
                         world.push(Sphere::new(center, 0.2, sphere_material));
                     }
 
                     // Metal 15% chance
                     x if x < 0.95 => {
-                        let sphere_material = Metal::new(Color::random(), rng.gen_range(0.0..0.5));
+                        let sphere_material = Color::random().metal(rng.gen_range(0.0..0.5));
 
                         world.push(Sphere::new(center, 0.2, sphere_material));
                     }
@@ -274,10 +272,10 @@ pub fn scene3() -> SceneBuilder<impl Hittable> {
     let material1 = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = Lambertian::new(Solid::new(0.4, 0.2, 0.1));
+    let material2 = Color::new(0.4, 0.2, 0.1).lambertian();
     world.push(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
-    let material3 = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
+    let material3 = Color::new(0.7, 0.6, 0.5).metal(0.0);
     world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
@@ -305,11 +303,11 @@ pub fn scene4() -> SceneBuilder<impl Hittable> {
         (0.0, 1.0),
     );
 
-    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
-    let mat = Lambertian::new(checker);
+    let checker =
+        CheckerTexture::new(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9)).lambertian();
 
-    let sphere1 = Sphere::new(Vec3::new(0.0, -10.0, 0.0), 10.0, mat.clone());
-    let sphere2 = Sphere::new(Vec3::new(0.0, 10.0, 0.0), 10.0, mat);
+    let sphere1 = Sphere::new(Vec3::new(0.0, -10.0, 0.0), 10.0, checker.clone());
+    let sphere2 = Sphere::new(Vec3::new(0.0, 10.0, 0.0), 10.0, checker);
 
     let world = BvhNode::new(sphere1, sphere2, (0.0, 0.0));
 
@@ -336,13 +334,9 @@ pub fn scene5() -> SceneBuilder<impl Hittable> {
         (0.0, 1.0),
     );
 
-    let perlin = Noise::new(4.0);
-    let ground = Sphere::new(
-        Vec3::new(0.0, -1000.0, 0.0),
-        1000.0,
-        Lambertian::new(perlin.clone()),
-    );
-    let sphere = Sphere::new(Vec3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(perlin));
+    let perlin = Noise::new(4.0).lambertian();
+    let ground = Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0, perlin.clone());
+    let sphere = Sphere::new(Vec3::new(0.0, 2.0, 0.0), 2.0, perlin);
 
     let world = BvhNode::new(ground, sphere, (0.0, 1.0));
 
@@ -371,11 +365,7 @@ pub fn scene6() -> SceneBuilder<impl Hittable> {
 
     let earth_image = image::open("imgs/earthmap.jpg").unwrap();
     let earth_texture = Image::new(earth_image.into_rgb8());
-    let globe = Sphere::new(
-        Vec3::new(0.0, 0.0, 0.0),
-        2.0,
-        Lambertian::new(earth_texture),
-    );
+    let globe = Sphere::new(Vec3::new(0.0, 0.0, 0.0), 2.0, earth_texture.lambertian());
 
     SceneBuilder::new(globe, camera, ASPECT_RATIO)
 }
@@ -403,8 +393,8 @@ pub fn scene7() -> SceneBuilder<impl Hittable> {
     let mut world = HittableList::new();
 
     // Ground
-    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
-    let ground_material = Lambertian::new(checker);
+    let checker = CheckerTexture::new(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let ground_material = checker.lambertian();
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -412,7 +402,7 @@ pub fn scene7() -> SceneBuilder<impl Hittable> {
     ));
 
     // Light
-    let light = DiffuseLight::new(Solid::new(10.0, 10.0, 10.0));
+    let light = DiffuseLight::new(Color::new(10.0, 10.0, 10.0));
     world.push(Sphere::new(Vec3::new(0.0, 4.0, 2.0), 0.7, light));
 
     // Glass spheres
@@ -421,7 +411,7 @@ pub fn scene7() -> SceneBuilder<impl Hittable> {
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
 
-    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
 pub fn scene8() -> SceneBuilder<impl Hittable> {
     // Camera
@@ -447,17 +437,13 @@ pub fn scene8() -> SceneBuilder<impl Hittable> {
     let mut world = HittableList::new();
 
     // Ground
-    let checker = CheckerTexture::from_color(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
-    let ground_material = Lambertian::new(checker);
+    let checker = CheckerTexture::new(Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let ground_material = checker.lambertian();
     world.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
     ));
-
-    // Light
-    // let light = DiffuseLight::new(Solid::new(10.0, 10.0, 10.0));
-    // world.push(Sphere::new(Vec3::new(0.0, 4.0, 2.0), 0.7, light));
 
     // Glass spheres
     let glass = Dielectric::new(1.5);
@@ -465,7 +451,7 @@ pub fn scene8() -> SceneBuilder<impl Hittable> {
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
 
-    SceneBuilder::new(world, camera, ASPECT_RATIO) /* .background_color(Color::new(0.0, 0.0, 0.0)) */
+    SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
 pub fn scene9() -> SceneBuilder<impl Hittable> {
     // Camera
@@ -490,10 +476,10 @@ pub fn scene9() -> SceneBuilder<impl Hittable> {
 
     let mut world = HittableList::new();
 
-    let red = Lambertian::new(Solid::new(0.65, 0.05, 0.05));
-    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
-    let green = Lambertian::new(Solid::new(0.12, 0.45, 0.15));
-    let light = DiffuseLight::new(Solid::new(15.0, 15.0, 15.0));
+    let red = color::RED.lambertian();
+    let white = color::WHITISH.lambertian();
+    let green = color::GREEN.lambertian();
+    let light = DiffuseLight::new(Color::new(15.0, 15.0, 15.0));
 
     world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 555.0, green));
     world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 0.0, red));
@@ -507,7 +493,7 @@ pub fn scene9() -> SceneBuilder<impl Hittable> {
     world.push(XYRect::new((0.0, 555.0), (0.0, 555.0), 555.0, white));
     world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
 
-    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
 pub fn scene10() -> SceneBuilder<impl Hittable> {
     // Camera
@@ -532,10 +518,10 @@ pub fn scene10() -> SceneBuilder<impl Hittable> {
 
     let mut world = HittableList::new();
 
-    let red = Lambertian::new(Solid::new(0.65, 0.05, 0.05));
-    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
-    let green = Lambertian::new(Solid::new(0.12, 0.45, 0.15));
-    let light = DiffuseLight::new(Solid::new(15.0, 15.0, 15.0));
+    let red = color::RED.lambertian();
+    let white = color::WHITISH.lambertian();
+    let green = color::GREEN.lambertian();
+    let light = DiffuseLight::new(Color::new(15.0, 15.0, 15.0));
 
     // Walls
     world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 555.0, green));
@@ -569,7 +555,7 @@ pub fn scene10() -> SceneBuilder<impl Hittable> {
     // Light
     world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
 
-    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
 pub fn scene11() -> SceneBuilder<impl Hittable> {
     // Camera
@@ -594,10 +580,10 @@ pub fn scene11() -> SceneBuilder<impl Hittable> {
 
     let mut world = HittableList::new();
 
-    let red = Lambertian::new(Solid::new(0.65, 0.05, 0.05));
-    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
-    let green = Lambertian::new(Solid::new(0.12, 0.45, 0.15));
-    let light = DiffuseLight::new(Solid::new(15.0, 15.0, 15.0));
+    let red = color::RED.lambertian();
+    let white = color::WHITISH.lambertian();
+    let green = color::GREEN.lambertian();
+    let light = DiffuseLight::new(Color::new(15.0, 15.0, 15.0));
 
     // Walls
     world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 555.0, green));
@@ -640,7 +626,7 @@ pub fn scene11() -> SceneBuilder<impl Hittable> {
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
 
-    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
 pub fn scene12() -> SceneBuilder<impl Hittable> {
     // Camera
@@ -665,10 +651,10 @@ pub fn scene12() -> SceneBuilder<impl Hittable> {
 
     let mut world = HittableList::new();
 
-    let red = Lambertian::new(Solid::new(0.65, 0.05, 0.05));
-    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
-    let green = Lambertian::new(Solid::new(0.12, 0.45, 0.15));
-    let light = DiffuseLight::new(Solid::new(15.0, 15.0, 15.0));
+    let red = color::RED.lambertian();
+    let white = color::WHITISH.lambertian();
+    let green = color::GREEN.lambertian();
+    let light = DiffuseLight::new(Color::new(15.0, 15.0, 15.0));
 
     // Walls
     world.push(YZRect::new((0.0, 555.0), (0.0, 555.0), 555.0, green));
@@ -703,15 +689,15 @@ pub fn scene12() -> SceneBuilder<impl Hittable> {
     .rotate_y_by(-18.0_f64.to_radians())
     .translate_by(Vec3::new(130.0, 0.0, 65.0));
 
-    world.push(ConstantMedium::new(box1, Solid::new(0.0, 0.0, 0.0), 0.01));
-    world.push(ConstantMedium::new(box2, Solid::new(1.0, 1.0, 1.0), 0.01));
+    world.push(ConstantMedium::new(box1, Color::new(0.0, 0.0, 0.0), 0.01));
+    world.push(ConstantMedium::new(box2, Color::new(1.0, 1.0, 1.0), 0.01));
 
     // Light
     world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
 
-    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
 pub fn scene13() -> SceneBuilder<impl Hittable> {
     // Camera
@@ -740,7 +726,7 @@ pub fn scene13() -> SceneBuilder<impl Hittable> {
 
     //  Ground
     let mut ground_boxes = HittableList::new();
-    let ground = Lambertian::new(Solid::new(0.48, 0.83, 0.53));
+    let ground = Color::new(0.48, 0.83, 0.53).lambertian();
 
     for i in 0..20 {
         for j in 0..20 {
@@ -758,12 +744,12 @@ pub fn scene13() -> SceneBuilder<impl Hittable> {
 
     world.push(BvhNode::from_vec(ground_boxes.into_vec(), (0.0, 1.0)));
 
-    let light = DiffuseLight::new(Solid::new(7.0, 7.0, 7.0));
+    let light = DiffuseLight::new(Color::new(7.0, 7.0, 7.0));
     world.push(XZRect::new((123.0, 423.0), (147.0, 412.0), 554.0, light));
 
     let center1 = Vec3::new(400.0, 400.0, 200.0);
     let center2 = center1 + Vec3::new(30.0, 0.0, 0.0);
-    let moving_sphere_material = Lambertian::new(Solid::new(0.7, 0.3, 0.1));
+    let moving_sphere_material = Color::new(0.7, 0.3, 0.1).lambertian();
     world.push(MovingSphere::new(
         (center1, center2),
         50.0,
@@ -779,36 +765,30 @@ pub fn scene13() -> SceneBuilder<impl Hittable> {
     world.push(Sphere::new(
         Vec3::new(0.0, 150.0, 145.0),
         50.0,
-        Metal::new(Color::new(0.8, 0.8, 0.9), 1.0),
+        Color::new(0.8, 0.8, 0.9).metal(1.0),
     ));
 
     let boundary = Sphere::new(Vec3::new(360.0, 150.0, 145.0), 70.0, Dielectric::new(1.5));
     world.push(boundary.clone());
     world.push(ConstantMedium::new(
         boundary,
-        Solid::new(0.2, 0.4, 0.9),
+        Color::new(0.2, 0.4, 0.9),
         0.2,
     ));
     let boundary = Sphere::new(Vec3::new(0.0, 0.0, 0.0), 5000.0, Dielectric::new(1.5));
-    world.push(ConstantMedium::new(
-        boundary,
-        Solid::new(1.0, 1.0, 1.0),
-        0.0001,
-    ));
+    world.push(ConstantMedium::new(boundary, color::WHITE, 0.0001));
 
-    let emat = Lambertian::new(Image::new(
-        image::open("imgs/earthmap.jpg").unwrap().into_rgb8(),
-    ));
+    let emat = Image::new(image::open("imgs/earthmap.jpg").unwrap().into_rgb8()).lambertian();
     world.push(Sphere::new(Vec3::new(400.0, 200.0, 400.0), 100.0, emat));
     let pertext = Noise::new(0.1);
     world.push(Sphere::new(
         Vec3::new(220.0, 280.0, 300.0),
         80.0,
-        Lambertian::new(pertext),
+        pertext.lambertian(),
     ));
 
     let mut boxes2 = HittableList::new();
-    let white = Lambertian::new(Solid::new(0.73, 0.73, 0.73));
+    let white = color::WHITISH.lambertian();
     for _ in 0..1000 {
         boxes2.push(Sphere::new(
             Vec3::random_min_max(0.0, 165.0),
@@ -827,7 +807,7 @@ pub fn scene13() -> SceneBuilder<impl Hittable> {
 
     let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
 
-    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.0, 0.0, 0.0))
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
 pub fn scene14() -> SceneBuilder<impl Hittable> {
     // Camera
@@ -853,14 +833,10 @@ pub fn scene14() -> SceneBuilder<impl Hittable> {
 
     let mut world = HittableList::new();
 
-    let blue_color = Color::new(0.0941, 0.0588, 0.58);
-    let blue = Lambertian::new(Solid::from_color(blue_color));
-    let light = DiffuseLight::new(Solid::new(10.0, 13.0, 10.0));
-    let mirror = Metal::new(Color::new(0.7, 0.7, 0.7), 0.1);
-    let checker = Lambertian::new(CheckerTexture::new(
-        Solid::new(0.73, 0.73, 0.73),
-        Solid::new(0.1, 0.1, 0.1),
-    ));
+    let blue = color::BLUE.lambertian();
+    let light = DiffuseLight::new(Color::new(10.0, 13.0, 10.0));
+    let mirror = Color::new(0.7, 0.7, 0.7).metal(0.1);
+    let checker = CheckerTexture::new(color::WHITISH, color::BLACKISH).lambertian();
 
     // Ground
     world.push(XZRect::new((0.0, 15.0), (-10.0, 10.0), 0.01, checker));
@@ -900,9 +876,9 @@ pub fn scene14() -> SceneBuilder<impl Hittable> {
         AABox::new(
             Vec3::new(0.0, 0.0, -10.0),
             Vec3::new(15.0, 10.0, 10.0),
-            Lambertian::new(Solid::new(1.0, 1.0, 1.0)),
+            color::WHITE.lambertian(),
         ),
-        Solid::new(1.0, 1.0, 1.0),
+        Color::new(1.0, 1.0, 1.0),
         0.02,
     );
     world.push(fog);
