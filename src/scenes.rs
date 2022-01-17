@@ -93,7 +93,7 @@ pub fn scene1() -> SceneBuilder<impl Hittable> {
     let material3 = Color::new(0.7, 0.6, 0.5).metal(0.0);
     world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
@@ -193,7 +193,7 @@ pub fn scene2() -> SceneBuilder<impl Hittable> {
     let material3 = Color::new(0.7, 0.6, 0.5).metal(0.0);
     world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
@@ -278,7 +278,7 @@ pub fn scene3() -> SceneBuilder<impl Hittable> {
     let material3 = Color::new(0.7, 0.6, 0.5).metal(0.0);
     world.push(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, material3));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
@@ -409,7 +409,7 @@ pub fn scene7() -> SceneBuilder<impl Hittable> {
     let glass = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 2.0, 0.0), 1.0, glass));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
@@ -449,7 +449,7 @@ pub fn scene8() -> SceneBuilder<impl Hittable> {
     let glass = Dielectric::new(1.5);
     world.push(Sphere::new(Vec3::new(0.0, 0.0, 0.0), 1.0, glass));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO)
 }
@@ -624,7 +624,7 @@ pub fn scene11() -> SceneBuilder<impl Hittable> {
     // Light
     world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
@@ -695,7 +695,7 @@ pub fn scene12() -> SceneBuilder<impl Hittable> {
     // Light
     world.push(XZRect::new((213.0, 343.0), (227.0, 332.0), 554.0, light));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
@@ -742,7 +742,7 @@ pub fn scene13() -> SceneBuilder<impl Hittable> {
         }
     }
 
-    world.push(BvhNode::from_vec(ground_boxes.into_vec(), (0.0, 1.0)));
+    world.push(ground_boxes.into_bvh((0.0, 1.0)));
 
     let light = DiffuseLight::new(Color::new(7.0, 7.0, 7.0));
     world.push(XZRect::new((123.0, 423.0), (147.0, 412.0), 554.0, light));
@@ -798,14 +798,11 @@ pub fn scene13() -> SceneBuilder<impl Hittable> {
     }
 
     world.push(Translate::new(
-        RotateY::new(
-            BvhNode::from_vec(boxes2.into_vec(), (0.0, 1.0)),
-            15.0_f64.to_radians(),
-        ),
+        RotateY::new(boxes2.into_bvh((0.0, 1.0)), 15.0_f64.to_radians()),
         Vec3::new(-100.0, 270.0, 395.0),
     ));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLACK)
 }
@@ -886,7 +883,7 @@ pub fn scene14() -> SceneBuilder<impl Hittable> {
     // Light
     world.push(Sphere::new(Vec3::new(6.0, 10.0, 5.0), 2.0, light));
 
-    let world = BvhNode::from_vec(world.into_vec(), (0.0, 1.0));
+    let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.7, 0.8, 1.0) * 0.1)
 }

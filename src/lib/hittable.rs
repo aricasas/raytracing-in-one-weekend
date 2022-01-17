@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::materials::Material;
 use crate::surfaces::Aabb;
+use crate::surfaces::BvhNode;
 use crate::Ray;
 use crate::Vec3;
 
@@ -85,6 +86,10 @@ impl HittableList {
 
     pub fn into_vec(self) -> Vec<Arc<dyn Hittable>> {
         self.surfaces
+    }
+
+    pub fn into_bvh(self, time: (f64, f64)) -> BvhNode {
+        BvhNode::from_vec(self.into_vec(), time)
     }
 }
 
