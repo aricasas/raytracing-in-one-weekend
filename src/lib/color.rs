@@ -67,7 +67,7 @@ impl Color {
         );
     }
 
-    pub fn lambertian(self) -> Lambertian<Color> {
+    pub fn lambertian(self) -> Lambertian<Self> {
         Lambertian::new(self)
     }
     pub fn metal(self, fuzz: f64) -> Metal {

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::hittable::HitRecord;
 use crate::materials::{Material, ScatterRecord};
 use crate::textures::Texture;
@@ -9,14 +7,12 @@ use crate::Vec3;
 
 #[derive(Clone)]
 pub struct DiffuseLight<T: Texture> {
-    pub emit: Arc<T>,
+    pub emit: T,
 }
 
 impl<T: Texture> DiffuseLight<T> {
     pub fn new(emit: T) -> Self {
-        Self {
-            emit: Arc::new(emit),
-        }
+        Self { emit }
     }
 }
 

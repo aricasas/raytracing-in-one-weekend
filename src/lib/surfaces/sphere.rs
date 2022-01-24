@@ -3,7 +3,7 @@ use crate::hittable::{HitRecord, Hittable};
 use crate::materials::Material;
 use crate::Ray;
 use crate::Vec3;
-use std::f64::consts::PI;
+use std::f64::consts::{PI, TAU};
 
 #[derive(Clone)]
 pub struct Sphere<T: Material + Clone + 'static> {
@@ -34,7 +34,7 @@ impl<T: Material + Clone + 'static> Sphere<T> {
         let theta = f64::acos(-p.y());
         let phi = f64::atan2(-p.z(), p.x()) + PI;
 
-        let u = phi / (2.0 * PI);
+        let u = phi / TAU;
         let v = theta / PI;
 
         (u, v)

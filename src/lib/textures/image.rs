@@ -25,8 +25,8 @@ impl Texture for Image {
         let image_width = self.image.width();
         let image_height = self.image.height();
 
-        let pixel_coord_x = ((u * f64::from(image_width)) as u32).min(image_width);
-        let pixel_coord_y = ((v * f64::from(image_height)) as u32).min(image_height);
+        let pixel_coord_x = ((u * f64::from(image_width)) as u32).min(image_width - 1);
+        let pixel_coord_y = ((v * f64::from(image_height)) as u32).min(image_height - 1);
 
         let pixel = self.image[(pixel_coord_x, pixel_coord_y)];
 
