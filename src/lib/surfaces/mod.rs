@@ -1,14 +1,18 @@
 mod aa_box;
 mod aa_rects;
 mod aabb;
+mod bowl;
 mod bvh;
 mod constant_medium;
 mod moving_sphere;
+mod parabola;
 mod sphere;
 pub use aa_box::AABox;
 pub use aa_rects::{XYRect, XZRect, YZRect};
 pub use aabb::Aabb;
+pub use bowl::Bowl;
 pub use bvh::BvhNode;
 pub use constant_medium::ConstantMedium;
 pub use moving_sphere::MovingSphere;
+pub use parabola::ParabolaX;
 pub use sphere::Sphere;
