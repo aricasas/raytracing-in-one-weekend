@@ -1,0 +1,10 @@
+scene7_75000spp - Done. Rendering took 15 hours, 42 minutes, and 21.595 seconds.
+scene11_18250spp wrong boxes - Done. Rendering took 4 hours, 51 minutes, and 37.324 seconds.
+scene11_2160_30000spp - ~15 hours
+scene13_1000_15000spp - Wrong moving sphere - Done. Rendering took 3 hours, 57 minutes, and 34.198 seconds.
+scene12_1080_20000spp - Done. Rendering took 3 hours, 48 minutes, and 1.239 seconds.
+scene13_1080_1000spp - Done. Rendering took 20 minutes, and 51.875 seconds.
+scene13_1440_30000spp - ~15.5hrs
+scene14_2560_30000 - Done. Rendering took 11 hours, 20 minutes, and 5.054 seconds.
+scene16_1920_1000 - Done. Rendering took 2 hours, 9 minutes, and 27.581 seconds.
+scene16_2560_3500 - Done. Rendering took 12 hours, 20 minutes, and 17.081 seconds.
