@@ -1,4 +1,4 @@
-use crate::{Camera, Color, Hittable};
+use crate::{color, Camera, Color, Hittable};
 
 pub struct Scene<T: Hittable> {
     world: T,
@@ -71,7 +71,7 @@ impl<T: Hittable> SceneBuilder<T> {
 
     pub fn build(self) -> Scene<T> {
         let world = self.world;
-        let background_color = self.background_color.unwrap_or(Color::new(0.7, 0.8, 1.0));
+        let background_color = self.background_color.unwrap_or(color::BLUE_SKY);
         let camera = self.camera;
         let image_size = self
             .image_size

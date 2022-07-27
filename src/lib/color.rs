@@ -18,6 +18,7 @@ pub const WHITISH: Color = Color::new(0.73, 0.73, 0.73);
 pub const BLUE: Color = Color::new(0.0941, 0.0588, 0.58);
 pub const GREEN: Color = Color::new(0.12, 0.45, 0.15);
 pub const RED: Color = Color::new(0.65, 0.05, 0.05);
+pub const BLUE_SKY: Color = Color::new(0.7, 0.8, 1.0);
 
 impl Color {
     pub const fn new(r: f64, g: f64, b: f64) -> Self {

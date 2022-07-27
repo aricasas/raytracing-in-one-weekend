@@ -6,7 +6,7 @@ use raytracing::instances::{RotateY, RotationY, Translate, Translation};
 use raytracing::materials::{Dielectric, DiffuseLight};
 use raytracing::scene::SceneBuilder;
 use raytracing::surfaces::{
-    AABox, BvhNode, ConstantMedium, MovingSphere, Sphere, XYRect, XZRect, YZRect,
+    AABox, Bowl, BvhNode, ConstantMedium, MovingSphere, ParabolaX, Sphere, XYRect, XZRect, YZRect,
 };
 use raytracing::textures::{CheckerTexture, Image, Noise, Texture};
 use raytracing::Camera;
@@ -886,4 +886,106 @@ pub fn scene14() -> SceneBuilder<impl Hittable> {
     let world = world.into_bvh((0.0, 1.0));
 
     SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(Color::new(0.7, 0.8, 1.0) * 0.1)
+}
+pub fn scene15() -> SceneBuilder<impl Hittable> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(2.0, 3.0, 15.0);
+    const LOOK_AT: Vec3 = Vec3::new(0.0, -2.0, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 20.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let green = color::GREEN.lambertian();
+    let checker = CheckerTexture::new(color::BLACKISH, color::WHITISH).lambertian();
+    let mirror = color::WHITISH.metal(0.001);
+    let cakey = image::open("imgs/cakey_boss.jpg").unwrap();
+    let boss = Image::new(cakey.into_rgb8()).lambertian();
+
+    let mut world = HittableList::new();
+
+    let parabola = ParabolaX::new((-2.5, 2.5), (-4.0, 4.0), (-0.2, 0.0, -3.0), boss);
+    world.push(parabola);
+    let parabola = ParabolaX::new((-2.5, 2.5), (-4.0, 2.5), (1.0, 0.0, -2.0), mirror);
+    world.push(parabola);
+
+    let sphere = Sphere::new(Vec3::new(0.0, -2.0 * -2.0 * 0.5 - 3.0, -1.0), 0.7, green);
+    world.push(sphere);
+    let wall = XYRect::new(
+        (f64::NEG_INFINITY, f64::INFINITY),
+        (f64::NEG_INFINITY, f64::INFINITY),
+        -4.0,
+        checker,
+    );
+    world.push(wall);
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO)
+}
+pub fn scene16() -> SceneBuilder<impl Hittable> {
+    // Camera
+    const LOOK_FROM: Vec3 = Vec3::new(-0.3, 1.0, 0.0);
+    const LOOK_AT: Vec3 = Vec3::new(1.0, 1.46, 0.0);
+    const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    const FOV: f64 = 38.0;
+    const APERTURE: f64 = 0.0;
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+
+    let camera = Camera::new(
+        LOOK_FROM,
+        LOOK_AT,
+        VUP,
+        FOV,
+        ASPECT_RATIO,
+        APERTURE,
+        DIST_TO_FOCUS,
+        (0.0, 1.0),
+    );
+
+    let mut world = HittableList::new();
+
+    // Ground
+    let ground_material = color::WHITISH.lambertian();
+    world.push(XZRect::new(
+        (-1000.0, 1000.0),
+        (-1000.0, 1000.0),
+        0.0,
+        ground_material,
+    ));
+
+    // Glass spheres
+    let glass = Dielectric::new(1.5);
+
+    for x in 0..100 {
+        for y in 0..15 {
+            for z in 0..100 {
+                world.push(Sphere::new(
+                    Vec3::new(
+                        -50.0 + f64::from(x),
+                        0.5 + f64::from(y),
+                        -50.0 + f64::from(z),
+                    ),
+                    0.2,
+                    glass.clone(),
+                ));
+            }
+        }
+    }
+
+    let world = world.into_bvh((0.0, 1.0));
+
+    SceneBuilder::new(world, camera, ASPECT_RATIO).background_color(color::BLUE_SKY)
+    // Use max depth=10
 }
