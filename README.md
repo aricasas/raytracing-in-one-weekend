@@ -2,7 +2,20 @@
 
 ![Portrait image from the book](imgs/checkered_floor.png)
 
-This is a Ray Tracer based on the book series [Ray Tracing in One Weekend](https://raytracing.github.io/) but implemented in Rust.
+This is a Ray Tracer based on the book series [Ray Tracing in One Weekend](https://raytracing.github.io/), implemented in Rust. 
+
+It can render spheres, planes, cubes, and paraboloids as geometric primitives.
+
+It supports the following types of textures:
+- Solid colors
+- Image textures
+- Reflective surfaces (mirrors)
+- Transparent glass with refraction
+- Procedurally generated textures
+
+Computation is done in parallel using [Rayon](https://github.com/rayon-rs/rayon) with a thread pool for multithreading, where each job processes a 16x16 block of pixels. This ensures that each job is large enough to reduce scheduling overhead while also improving spatial locality in memory access since neighboring pixels are likely to intersect the same objects and sample the same textures.
+
+Also, I use a Bounding Volume Hierarchy (BVH) for efficient ray-object intersection tests.
 
 It outputs a PNG image
 
