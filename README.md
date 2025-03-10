@@ -2,9 +2,9 @@
 
 ![Portrait image from the book](imgs/checkered_floor.png)
 
-This is a Ray Tracer based on the book series [Ray Tracing in One Weekend](https://raytracing.github.io/), implemented in Rust. 
+This is a path tracer based on the book series [Ray Tracing in One Weekend](https://raytracing.github.io/), implemented in Rust. 
 
-It can render spheres, planes, cubes, and paraboloids as geometric primitives.
+It can render scenes made of spheres, planes, cubes, and paraboloids as geometric primitives. The scene is from the point of view of a simulated "camera" with adjustable position, field of view, and aperture.
 
 It supports the following types of textures:
 - Solid colors
@@ -12,6 +12,8 @@ It supports the following types of textures:
 - Reflective surfaces (mirrors)
 - Transparent glass with refraction
 - Procedurally generated textures
+
+It also supports rendering volumetric objects, such as clouds and fog.
 
 Computation is done in parallel using [Rayon](https://github.com/rayon-rs/rayon) with a thread pool for multithreading, where each job processes a 16x16 block of pixels. This ensures that each job is large enough to reduce scheduling overhead while also improving spatial locality in memory access since neighboring pixels are likely to intersect the same objects and sample the same textures.
 
